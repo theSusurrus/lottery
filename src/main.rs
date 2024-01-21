@@ -10,9 +10,11 @@ use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
 
 mod frontend;
+mod pdf;
 
 async fn hello(_: Request<hyper::body::Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
-    let names: Vec<&str> = vec!["Kuba", "Kacper"];
+    // let names: Vec<&str> = vec!["Kuba", "Kacper"];
+    let names = pdf::get_names("test.pdf");
     let html = frontend::get_frontend(names);
     Ok(Response::new(Full::new(Bytes::from(html))))
 }
