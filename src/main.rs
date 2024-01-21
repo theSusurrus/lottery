@@ -9,8 +9,11 @@ use hyper::{Request, Response};
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
 
+mod frontend;
+
 async fn hello(_: Request<hyper::body::Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
-    Ok(Response::new(Full::new(Bytes::from("Hello, World!"))))
+    let html = frontend::get_frontend().unwrap();
+    Ok(Response::new(Full::new(Bytes::from(html))))
 }
 
 #[tokio::main]
