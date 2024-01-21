@@ -12,7 +12,8 @@ use tokio::net::TcpListener;
 mod frontend;
 
 async fn hello(_: Request<hyper::body::Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
-    let html = frontend::get_frontend().unwrap();
+    let names: Vec<&str> = vec!["Kuba", "Kacper"];
+    let html = frontend::get_frontend(names);
     Ok(Response::new(Full::new(Bytes::from(html))))
 }
 
