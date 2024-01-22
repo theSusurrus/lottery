@@ -14,12 +14,6 @@ use std::future::Future;
 mod frontend;
 mod pdf;
 
-// async fn hello(_: Request<hyper::body::Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
-//     // let names: Vec<&str> = vec!["Kuba", "Kacper"];
-//     let html = frontend::get_frontend(names);
-//     Ok(Response::new(Full::new(Bytes::from(html))))
-// }
-
 #[derive(Debug, Clone)]
 struct LotteryService {
     names: Vec<String>
