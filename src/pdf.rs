@@ -1,24 +1,18 @@
-use lopdf::Document;
+use pdf_extract;
 
-pub fn get_names(path : &str) -> Vec<&str> {
+pub fn get_names(path : &str) -> Vec<String> {
+    let out = pdf_extract::extract_text(path).unwrap();
 
-    match Document::load(path) {
-        Ok(document) => {
-            let pages = document.get_pages();
-            let mut texts = Vec::new();
+    println!("{out:?}");
 
-            for (i, _) in pages.iter().enumerate() {
-                let page_number = (i + 1) as u32;
-                let text = document.extract_text(&[page_number]);
-                texts.push(text.unwrap_or_default());
-            }
+    let names_split = out.split('\n').skip_while(|&x| !x.is_empty()).to_owned();
 
-            println!("Texts {:?}", texts);
-        }
-        Err(err) => eprintln!("Error: {}", err),
-    }
+    let mut names : Vec<String> = vec![];
+    for name in names_split.into_iter() {
+        names.push(name.to_string());
+    } 
 
-    let names = vec!["Kuba", "Fiszu"];
+    println!("{names:?}");
 
     names
 }
