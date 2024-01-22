@@ -2,57 +2,111 @@
 <html>
 
 <head>
+    <meta name="viewport" content="width=414, height=896, initial-scale=1">
     <style>
+        a:link {
+            color: #10a8f0
+        }
+
+        a:visited {
+            color: #797979
+        }
+
         .textarea {
-        padding-top: 177.77%;
-        width: 100%;
-        background-color: #2e3035;
+            padding-top: 177.77%;
+            width: 100%;
+            background-color: #2e3035;
         }
 
         .button {
-        position: relative;
-        bottom: 0;
+            position: relative;
+            bottom: 0;
         }
     </style>
 </head>
 
 <body bgcolor="#2e3035">
-    <textarea id="lista" value="" style="font-family: Arial; color: #dddddd; font-size:200%; width:100%; height:800px ; background-color:#2e3035">
+
+<textarea id="lista" 
+    value="" 
+    style="font-family: Arial; 
+    color: #dddddd; 
+    font-size:5vw; 
+    width:100%; 
+    height:60vh;
+    resize:none;  
+    background-color:#2e3035" 
+    readonly>
     </textarea>
 <br>
-<button type="button" style="width:100%; height: 80px" onclick="importList()">Import</button>
+
+<!--button type="button" 
+    style="width:100%; 
+    height:13vh; 
+    font-size: 6vw;" 
+    onclick="importList()">Import</button>
+<br-->
+
+<button type="button" 
+    style="width:100%; 
+    height:13vh; 
+    font-size: 6vw;" 
+    onclick="rollNext()">Roll the dice!</button>
 <br>
-<button type="button" style="width:100%; height: 80px" onclick="rollNext()">Roll the dice!</button>
-<br>
-<textarea id="losowany" value="" style="text-align:center; vertical-align:middle; font-family: Arial; color: #dddddd; font-size: 300%; width:100%; height:100px ; background-color:#2e3035">
+
+<textarea id="losowany" 
+    value="" 
+    style="text-align:center; 
+    line-height: 13vh;
+    font-family: Arial; 
+    color: #dddddd; 
+    font-size: 6vw; 
+    width:100%; 
+    height:13vh;
+    resize:none; 
+    background-color:#2e3035" 
+    readonly>
 </textarea>
+<br>
+<p style="color:white; font-family: Arial">
+<i>Apka do losowania nagród stworzona na potrzeby sklepu Gralnia
+<br>
+2024, <a href="https://github.com/theSusurrus/lottery">github.com/theSusurrus/lottery</a></i>
+</p>
+
 <script>
 
-// let listaGraczy = ["Adam", "Bartek", "Czarek","Dawid", "Emil", "Filip", "Grzegorz", "Henryk",];
-//LISTA_GRACZY
+let siteWidth = 414;
+let siteHeight = 896;
+let scale = screen.width /siteWidth;
+let scale2 = screen.height /siteHeight;
+
+document.querySelector('meta[name="viewport"]').setAttribute('content', 'width='+siteWidth+', initial-scale='+scale+'', 'height='+siteHeight+', initial-scale='+scale2+'');
+
+let listaGraczy = ["Adam", "Błażej Drużdż", "Czarek","Dawid", "Emil", "Filip", "Grzegorz", "Henryk"];
 let listaGraczyPamiec = listaGraczy;
 let losowaniePamiec = listaGraczy;
+let losowanieLiczba = listaGraczy.length;
 let gracz = "";
 
-async function importList (){
-    listaGraczy = listaGraczy.join('\n');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    document.getElementById("lista").value = listaGraczy;
-    if (listaGraczy.length == 0) {
-        document.getElementById("losowany").style.backgroundColor="#7a1414"
-        gracz = "Błąd importu"
-    } else {
-        document.getElementById("losowany").style.backgroundColor="#2e6035"
-        gracz = "Import poprawny"
-    }
-    document.getElementById("losowany").value = gracz;
+//Importowanie listy graczy, możliwość zmiany na wywołanie funkcji przyciskiem
 
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    document.getElementById("losowany").style.backgroundColor="#2e3035"
-    document.getElementById("losowany").value = "";
-
-    listaGraczy = listaGraczyPamiec;
+//async function importList (){
+listaGraczy = listaGraczy.join('\n');
+//await new Promise(resolve => setTimeout(resolve, 500));
+document.getElementById("lista").value = listaGraczy;
+if (listaGraczy.length == 0) {
+    document.getElementById("losowany").style.backgroundColor="#7a1414"
+    gracz = "Błąd importu"
+} else {
+    document.getElementById("losowany").style.backgroundColor="#2e6035"
+    gracz = "Import poprawny - liczba graczy: " + losowanieLiczba;
 }
+document.getElementById("losowany").value = gracz;
+listaGraczy = listaGraczyPamiec;
+//}
+
+//Mechanizm losowania - tworzy nowy array z usuniętą losową pozycją, wyświetla różnicę między arrayami
 
 async function rollNext (){
     document.getElementById("losowany").style.backgroundColor="#2e3035"
