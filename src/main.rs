@@ -1,5 +1,3 @@
-use std::net::SocketAddr;
-
 use http_body_util::Full;
 use hyper::body::Bytes;
 use hyper::server::conn::http1;
@@ -13,6 +11,7 @@ use std::future::Future;
 
 mod frontend;
 mod pdf;
+mod config;
 
 #[derive(Debug, Clone)]
 struct LotteryService {
@@ -47,16 +46,15 @@ impl Service<Request<IncomingBody>> for LotteryService {
 
 #[tokio::main]
 pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let config = config::LotteryConfig::new();
+
     let service = LotteryService {
         names : pdf::get_names("test.pdf")
     };
 
-    // This address is localhost
-    let addr: SocketAddr = ([127, 0, 0, 1], 3000).into();
-
     // Bind to the port and listen for incoming TCP connections
-    let listener = TcpListener::bind(addr).await?;
-    println!("Listening on http://{}", addr);
+    let listener = TcpListener::bind(config.socket).await?;
+    println!("Listening on http://{}", config.socket);
     loop {
         // When an incoming TCP connection is received grab a TCP stream for
         // client<->server communication.
