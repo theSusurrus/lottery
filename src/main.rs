@@ -1,24 +1,55 @@
-use std::convert::Infallible;
 use std::net::SocketAddr;
 
 use http_body_util::Full;
 use hyper::body::Bytes;
 use hyper::server::conn::http1;
-use hyper::service::service_fn;
-use hyper::{Request, Response};
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
 
-mod frontend;
+use hyper::service::Service;
+use hyper::{body::Incoming as IncomingBody, Request, Response};
+use std::pin::Pin;
+use std::future::Future;
 
-async fn hello(_: Request<hyper::body::Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
-    let names: Vec<&str> = vec!["Kuba", "Kacper"];
-    let html = frontend::get_frontend(names);
-    Ok(Response::new(Full::new(Bytes::from(html))))
+mod frontend;
+mod pdf;
+
+#[derive(Debug, Clone)]
+struct LotteryService {
+    names: Vec<String>
+}
+
+impl Service<Request<IncomingBody>> for LotteryService {
+    type Response = Response<Full<Bytes>>;
+    type Error = hyper::Error;
+    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>;
+
+    fn call(&self, req: Request<IncomingBody>) -> Self::Future {
+        let mk_generic_response = | s: String | -> Result<Response<Full<Bytes>>, hyper::Error> {
+            Ok(Response::builder().body(Full::new(Bytes::from(s))).unwrap())
+        };
+
+        let mk_lottery_response = | | -> Result<Response<Full<Bytes>>, hyper::Error> {
+            let html = frontend::get_frontend(self.names.clone());
+            Ok(Response::builder().body(Full::new(Bytes::from(html))).unwrap())
+        };
+
+        let res = match req.uri().path() {
+            "/" => mk_generic_response(format!("home")),
+            "/names" => mk_generic_response(format!("names = {:?}", self.names)),
+            "/lottery" => mk_lottery_response(),
+            _ => mk_generic_response("oh no! not found".into()),
+        };
+
+        Box::pin(async { res })
+    }
 }
 
 #[tokio::main]
 pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let service = LotteryService {
+        names : pdf::get_names("test.pdf")
+    };
 
     // This address is localhost
     let addr: SocketAddr = ([127, 0, 0, 1], 3000).into();
@@ -39,6 +70,7 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Use an adapter to access something implementing `tokio::io` traits as if they implement
         // `hyper::rt` IO traits.
         let io = TokioIo::new(tcp);
+        let service_clone = service.clone();
 
         // Spin up a new task in Tokio so we can continue to listen for new TCP connection on the
         // current task without waiting for the processing of the HTTP1 connection we just received
@@ -47,7 +79,7 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             // Handle the connection from the client using HTTP1 and pass any
             // HTTP requests received on that connection to the `hello` function
             if let Err(err) = http1::Builder::new()
-                .serve_connection(io, service_fn(hello))
+                .serve_connection(io, service_clone)
                 .await
             {
                 println!("Error serving connection: {:?}", err);
