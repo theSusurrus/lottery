@@ -68,7 +68,7 @@ mod tests {
         map.insert(CONFIG_PORT.to_string(), "3000".to_string());
         map.insert(CONFIG_ADDRESS.to_string(), "127.0.0.1".to_string());
 
-        let socket = LotteryConfig::create_socket(map);
+        let socket = LotteryConfig::create_socket(&map);
 
         assert_eq!(socket.ip().octets(), [127, 0, 0, 1]);
         assert_eq!(socket.port(), 3000);
@@ -80,7 +80,7 @@ mod tests {
         map.insert(CONFIG_PORT.to_string(), "4000".to_string());
         map.insert(CONFIG_ADDRESS.to_string(), "192.168.1.100".to_string());
 
-        let socket = LotteryConfig::create_socket(map);
+        let socket = LotteryConfig::create_socket(&map);
 
         assert_eq!(socket.ip().octets(), [192, 168, 1, 100]);
         assert_eq!(socket.port(), 4000);
