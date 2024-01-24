@@ -9,7 +9,7 @@ use http_body_util::Full;
 use hyper::body::Bytes;
 use url;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Arc, Mutex};
 
 use crate::pdf;
 
@@ -80,8 +80,8 @@ impl Service<Request<IncomingBody>> for LotteryService {
             Some(lottery) => {
                 match lottery.as_str() {
                     "new" => {
-                        let mut names_guard: MutexGuard<'_, Vec<String>> = self.names.lock().unwrap();
-                        let names: &mut Vec<String> = names_guard.deref_mut();
+                        let mut names_guard = self.names.lock().unwrap();
+                        let names = names_guard.deref_mut();
                         names.clear();
                         *names = pdf::get_names("test.pdf");
                     },
