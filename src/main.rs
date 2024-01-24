@@ -1,22 +1,20 @@
-use std::net::SocketAddr;
-
 use hyper::server::conn::http1;
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
 
 mod http_service;
 mod pdf;
+mod config;
 
 #[tokio::main]
 pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let config = config::LotteryConfig::new();
+
     let service = http_service::LotteryService::new();
 
-    // This address is localhost
-    let addr: SocketAddr = ([127, 0, 0, 1], 3000).into();
-
     // Bind to the port and listen for incoming TCP connections
-    let listener = TcpListener::bind(addr).await?;
-    println!("Listening on http://{}", addr);
+    let listener = TcpListener::bind(config.socket).await?;
+    println!("Listening on http://{}", config.socket);
     loop {
         // When an incoming TCP connection is received grab a TCP stream for
         // client<->server communication.
