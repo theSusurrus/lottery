@@ -47,7 +47,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn socket_test() {
+    fn socket_test_localhost() {
         let mut map : HashMap<String, String> = HashMap::new();
         map.insert("port".to_string(), "3000".to_string());
         map.insert("address".to_string(), "127.0.0.1".to_string());
@@ -56,5 +56,17 @@ mod tests {
 
         assert_eq!(socket.ip().octets(), [127, 0, 0, 1]);
         assert_eq!(socket.port(), 3000);
+    }
+
+    #[test]
+    fn socket_test_lan() {
+        let mut map : HashMap<String, String> = HashMap::new();
+        map.insert("port".to_string(), "4000".to_string());
+        map.insert("address".to_string(), "192.168.1.100".to_string());
+
+        let socket = LotteryConfig::create_socket(map);
+
+        assert_eq!(socket.ip().octets(), [192, 168, 1, 100]);
+        assert_eq!(socket.port(), 4000);
     }
 }
