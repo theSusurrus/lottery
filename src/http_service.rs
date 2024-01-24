@@ -58,6 +58,8 @@ impl Service<Request<IncomingBody>> for LotteryService {
             Ok(Response::builder().body(Full::new(Bytes::from(html))).unwrap())
         };
 
+        println!("{req:?}");
+
         /* Match a response to a request */
         let res = match req.uri().path() {
             "/" => mk_file_response(self.host_prefix.clone() + self.homepage.as_str()),

@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html>
 
+<form action="/lottery.html" method="get" id="lottery">
+    <input type="radio" id="new" name="lottery" value="new">
+    <label for="html">NEW</label><br>
+    <input type="radio" id="existing" name="lottery" value="existing">
+    <label for="css">EXISTING</label><br>
+</form>
+
 <head>
     <style>
         .textarea {
@@ -18,9 +25,7 @@
 
 <body bgcolor="#2e3035">
 <br>
-<button type="button" style="width:100%; height: 80px">Start New</button>
-<br>
-<button type="button" style="width:100%; height: 80px">Continue Existing</button>
+<button type="submit" form="lottery" style="width:100%; height: 80px">Start</button>
 <br>
 
 </body>
