@@ -6,6 +6,8 @@ use std::pin::Pin;
 use std::future::Future;
 use http_body_util::Full;
 use hyper::body::Bytes;
+use url;
+use std::collections::HashMap;
 
 use crate::pdf;
 
@@ -58,14 +60,24 @@ impl Service<Request<IncomingBody>> for LotteryService {
             Ok(Response::builder().body(Full::new(Bytes::from(html))).unwrap())
         };
 
-        println!("{req:?}");
-
         /* Match a response to a request */
         let res = match req.uri().path() {
             "/" => mk_file_response(self.host_prefix.clone() + self.homepage.as_str()),
             "/names" => mk_generic_response(format!("names = {:?}", self.names)),
             requested_path => mk_file_response(self.host_prefix.clone() + requested_path),
         };
+
+        let params: HashMap<String, String> = req
+            .uri()
+            .query()
+            .map(|v| {
+                url::form_urlencoded::parse(v.as_bytes())
+                    .into_owned()
+                    .collect()
+            })
+            .unwrap_or_else(HashMap::new);
+
+        println!("{params:?}");
 
         Box::pin(async { res })
     }
