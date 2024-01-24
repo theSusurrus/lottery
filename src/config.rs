@@ -1,16 +1,21 @@
 use config::Config;
 use std::{collections::HashMap, net::{SocketAddrV4, Ipv4Addr}, str::FromStr};
 
-const CONFIG_PATH : &str = "config.toml";
 const CONFIG_PORT : &str = "port";
 const CONFIG_ADDRESS : &str = "address";
+const CONFIG_HOST : &str = "host_dir";
+const CONFIG_HOMEPAGE : &str = "home";
+const CONFIG_NAME_SOURCE : &str = "name_source";
 
 pub struct LotteryConfig {
-    pub socket : SocketAddrV4
+    pub socket : SocketAddrV4,
+    pub host_dir : String,
+    pub homepage : String,
+    pub name_source : String,
 }
 
 impl LotteryConfig {
-    fn create_socket(map: HashMap<String, String>) -> SocketAddrV4 {
+    fn create_socket(map: &HashMap<String, String>) -> SocketAddrV4 {
         /* get address from config */
         let address: Ipv4Addr = Ipv4Addr::from_str(
             map
@@ -28,10 +33,10 @@ impl LotteryConfig {
         SocketAddrV4::new(address, port)
     }
 
-    pub fn new() -> LotteryConfig {
+    pub fn new(config_path: &str) -> LotteryConfig {
         /* Create a config builder, based on file from CONFIG_PATH */
         let config_builder: Config = Config::builder()
-            .add_source(config::File::with_name(CONFIG_PATH))
+            .add_source(config::File::with_name(config_path))
             .build()
             .unwrap();
         let config_map: HashMap<String, String> = config_builder
@@ -39,7 +44,16 @@ impl LotteryConfig {
             .expect("Invalid config file");
 
         LotteryConfig {
-            socket : Self::create_socket(config_map)
+            socket : Self::create_socket(&config_map),
+            host_dir : config_map.get(CONFIG_HOST)
+                                 .expect("Host directory not configured")
+                                 .to_string(),
+            homepage : config_map.get(CONFIG_HOMEPAGE)
+                                 .expect("Homepage not configured")
+                                 .to_string(),
+            name_source : config_map.get(CONFIG_NAME_SOURCE)
+                                    .expect("Name source not configured")
+                                    .to_string(),
         }
     }
 }

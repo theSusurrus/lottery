@@ -17,10 +17,15 @@ fn get_file(path: String) -> String {
 }
 
 #[derive(Debug, Clone)]
+pub struct LotteryServiceConfig {
+    pub host_prefix: String,
+    pub homepage: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct LotteryService {
+    config: LotteryServiceConfig,
     names: Vec<String>,
-    host_prefix: String,
-    homepage: String,
 }
 
 impl LotteryService {
@@ -28,11 +33,10 @@ impl LotteryService {
      * Public constructor
      * Gets names from PDF
      */
-    pub fn new() -> LotteryService {
+    pub fn new(config: &LotteryServiceConfig) -> LotteryService {
         LotteryService {
-            names : pdf::get_names("test.pdf"),
-            host_prefix : "host/".to_string(),
-            homepage : "home.html".to_string(),
+            config: config.clone(),
+            names: vec![],
         }
     }
 }
@@ -60,9 +64,9 @@ impl Service<Request<IncomingBody>> for LotteryService {
 
         /* Match a response to a request */
         let res = match req.uri().path() {
-            "/" => mk_file_response(self.host_prefix.clone() + self.homepage.as_str()),
+            "/" => mk_file_response(self.config.host_prefix.clone() + self.config.homepage.as_str()),
             "/names" => mk_generic_response(format!("names = {:?}", self.names)),
-            requested_path => mk_file_response(self.host_prefix.clone() + requested_path),
+            requested_path => mk_file_response(self.config.host_prefix.clone() + requested_path),
         };
 
         Box::pin(async { res })
