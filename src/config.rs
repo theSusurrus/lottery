@@ -2,6 +2,8 @@ use config::Config;
 use std::{collections::HashMap, net::{SocketAddrV4, Ipv4Addr}, str::FromStr};
 
 const CONFIG_PATH : &str = "config.toml";
+const CONFIG_PORT : &str = "port";
+const CONFIG_ADDRESS : &str = "address";
 
 pub struct LotteryConfig {
     pub socket : SocketAddrV4
@@ -12,14 +14,14 @@ impl LotteryConfig {
         /* get address from config */
         let address: Ipv4Addr = Ipv4Addr::from_str(
             map
-                .get("address")
+                .get(CONFIG_ADDRESS)
                 .expect("No address found in {CONFIG_PATH}")
             ).expect("Invalid IP address");
 
         /* get port from config */
         let port = u16::from_str(
             map
-                .get("port")
+                .get(CONFIG_PORT)
                 .expect("No port found in {CONFIG_PATH}")
             ).expect("Invalid port value");
         
@@ -49,8 +51,8 @@ mod tests {
     #[test]
     fn socket_test_localhost() {
         let mut map : HashMap<String, String> = HashMap::new();
-        map.insert("port".to_string(), "3000".to_string());
-        map.insert("address".to_string(), "127.0.0.1".to_string());
+        map.insert(CONFIG_PORT.to_string(), "3000".to_string());
+        map.insert(CONFIG_ADDRESS.to_string(), "127.0.0.1".to_string());
 
         let socket = LotteryConfig::create_socket(map);
 
@@ -61,8 +63,8 @@ mod tests {
     #[test]
     fn socket_test_lan() {
         let mut map : HashMap<String, String> = HashMap::new();
-        map.insert("port".to_string(), "4000".to_string());
-        map.insert("address".to_string(), "192.168.1.100".to_string());
+        map.insert(CONFIG_PORT.to_string(), "4000".to_string());
+        map.insert(CONFIG_ADDRESS.to_string(), "192.168.1.100".to_string());
 
         let socket = LotteryConfig::create_socket(map);
 
