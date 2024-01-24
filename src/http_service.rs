@@ -1,4 +1,5 @@
 use std::fs;
+use std::ops::{Deref, DerefMut};
 
 use hyper::service::Service;
 use hyper::{body::Incoming as IncomingBody, Request, Response};
@@ -8,8 +9,11 @@ use http_body_util::Full;
 use hyper::body::Bytes;
 use url;
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use crate::pdf;
+
+const LOTTERY_PARAM: &str = "lottery";
 
 fn get_file(path: String) -> String {
     match fs::read_to_string(path) {
@@ -20,7 +24,7 @@ fn get_file(path: String) -> String {
 
 #[derive(Debug, Clone)]
 pub struct LotteryService {
-    names: Vec<String>,
+    names: Arc<Mutex<Vec<String>>>,
     host_prefix: String,
     homepage: String,
 }
@@ -32,7 +36,7 @@ impl LotteryService {
      */
     pub fn new() -> LotteryService {
         LotteryService {
-            names : pdf::get_names("test.pdf"),
+            names : Arc::new(Mutex::new(vec![])),
             host_prefix : "host/".to_string(),
             homepage : "home.html".to_string(),
         }
@@ -60,13 +64,6 @@ impl Service<Request<IncomingBody>> for LotteryService {
             Ok(Response::builder().body(Full::new(Bytes::from(html))).unwrap())
         };
 
-        /* Match a response to a request */
-        let res = match req.uri().path() {
-            "/" => mk_file_response(self.host_prefix.clone() + self.homepage.as_str()),
-            "/names" => mk_generic_response(format!("names = {:?}", self.names)),
-            requested_path => mk_file_response(self.host_prefix.clone() + requested_path),
-        };
-
         let params: HashMap<String, String> = req
             .uri()
             .query()
@@ -77,7 +74,29 @@ impl Service<Request<IncomingBody>> for LotteryService {
             })
             .unwrap_or_else(HashMap::new);
 
-        println!("{params:?}");
+        println!("{:?} {}\n\tparams={:?}", req.method(), req.uri(), params);
+        
+        match params.get(LOTTERY_PARAM) {
+            Some(lottery) => {
+                match lottery.as_str() {
+                    "new" => {
+                        let mut names_guard: MutexGuard<'_, Vec<String>> = self.names.lock().unwrap();
+                        let names: &mut Vec<String> = names_guard.deref_mut();
+                        names.clear();
+                        *names = pdf::get_names("test.pdf");
+                    },
+                    _ => ()
+                }
+            },
+            None => ()
+        };
+
+        /* Match a response to a request */
+        let res = match req.uri().path() {
+            "/" => mk_file_response(self.host_prefix.clone() + self.homepage.as_str()),
+            "/names" => mk_generic_response(format!("names = {:?}", self.names.lock().unwrap().deref())),
+            requested_path => mk_file_response(self.host_prefix.clone() + requested_path),
+        };
 
         Box::pin(async { res })
     }
