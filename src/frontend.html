@@ -34,12 +34,14 @@
     font-size:5vw; 
     width:100%; 
     height:60vh;
-    resize:none;  
+    resize:none;
+    border:none;  
     background-color:#2e3035" 
     readonly>
     </textarea>
 <br>
 
+<!-- Force import via button -->
 <!--button type="button" 
     style="width:100%; 
     height:13vh; 
@@ -49,13 +51,15 @@
 
 <textarea id="pozostalo" 
     value="" 
-    style="text-align:center; 
+    style="text-align:center;
+    line-height: 4vh; 
     font-family: Arial; 
     color: #dddddd; 
     font-size: 4vw; 
     width:100%; 
     height:4vh;
-    resize:none; 
+    resize:none;
+    border:none; 
     background-color:#2e3035" 
     readonly>
 </textarea>
@@ -76,7 +80,8 @@
     font-size: 6vw; 
     width:100%; 
     height:13vh;
-    resize:none; 
+    resize:none;
+    border:none;  
     background-color:#2e3035" 
     readonly>
 </textarea>
@@ -99,8 +104,19 @@ document.querySelector('meta[name="viewport"]').setAttribute('content', 'width='
 //Definiowanie zmiennych, sprawdzamy czy w pamięci jest zapisana lista graczy z poprzedniego losowania
 let listaGraczy = [];
 let storedPamiec = JSON.parse(localStorage.getItem("losowaniePamiec"));
+
+async function getNames () {
+    //listaGraczyURL = 'names.JSON';
+    const response = await fetch('./names.json');
+    const test = await response.json();
+    console.log(test);
+    console.log(test.length);
+}
+
 if (storedPamiec == null) {
-    listaGraczy = ["Adam", "Błażej Drużdż", "Czarek","Dawid", "Emil", "Filip", "Grzegorz", "Henryk"];
+//Tutaj będzie pobieranie pliku z listą graczy z serwera
+    //listaGraczy = ["Adam", "Błażej Drużdż", "Czarek","Dawid", "Emil", "Filip", "Grzegorz", "Henryk"];
+    getNames ();
 } else {
     listaGraczy = storedPamiec;
 }
