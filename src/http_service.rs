@@ -121,8 +121,10 @@ impl Service<Request<IncomingBody>> for LotteryService {
         println!("{:?} {}\n\tparams={:?}", req.method(), req.uri(), params);
         
         match params.get(LOTTERY_PARAM) {
+            /* lottery query found */
             Some(lottery) => {
                 match lottery.as_str() {
+                    /* if lottery=new, update the names in self and json */
                     "new" => {
                         match self.update_names() {
                             Ok(_) => (),
@@ -133,9 +135,11 @@ impl Service<Request<IncomingBody>> for LotteryService {
                             }
                         }
                     },
+                    /* lottery != new, do nothing */
                     _ => ()
                 }
             },
+            /* lottery query not found, do nothing */
             None => ()
         };
 
