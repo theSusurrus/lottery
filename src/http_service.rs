@@ -1,5 +1,5 @@
-use std::{fs};
-use std::io::Write;
+use std::{fs, io};
+use std::io::{Read, Write};
 use std::ops::{DerefMut};
 
 use hyper::service::Service;
@@ -18,10 +18,22 @@ use crate::pdf;
 const LOTTERY_PARAM: &str = "lottery";
 const NAMES_JSON_PATH: &str = "names.json";
 
-fn get_file(path: String) -> String {
-    match fs::read_to_string(path) {
-        Ok(html) => html,
-        Err(error) => error.to_string()
+fn get_file(path: String) -> Result<String, io::Error> {
+    match fs::File::open(path) {
+        Ok(mut file) => {
+            let mut contents = Vec::new();
+            match file.read_to_end(&mut contents) {
+                Ok(_) => {
+                    match String::from_utf8(contents) {
+                        Ok(string) => Ok(string),
+                        Err(error) =>
+                            Err(io::Error::new(io::ErrorKind::InvalidData, error)),
+                    }
+                },
+                Err(error) => Err(error),
+            }
+        },
+        Err(error) => Err(error)
     }
 }
 
@@ -104,8 +116,25 @@ impl Service<Request<IncomingBody>> for LotteryService {
         /* get file and return a Hyper Response containing it */
         let mk_file_response =
             | path: String | -> Result<Response<Full<Bytes>>, hyper::Error> {
-            let html = get_file(path);
-            Ok(Response::builder().body(Full::new(Bytes::from(html))).unwrap())
+            match get_file(path) {
+                Ok(html) => {
+                    let mut response = Response::builder()
+                        .body(
+                            Full::new(
+                                Bytes::from(
+                                    html
+                                )
+                            )
+                        ).unwrap();
+                    let headers: &mut hyper::HeaderMap = response.headers_mut();
+                    headers.insert(hyper::header::CONTENT_TYPE,
+                        "text/html; charset=utf-8".parse().unwrap());
+
+                    Ok(response)
+                },
+                Err(error) => mk_generic_response(error.to_string())
+            }
+            
         };
 
         let params: HashMap<String, String> = req
