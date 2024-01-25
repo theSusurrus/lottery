@@ -1,6 +1,6 @@
-use std::{fs, io};
+use std::{fs};
 use std::io::Write;
-use std::ops::{Deref};
+use std::ops::{DerefMut};
 
 use hyper::service::Service;
 use hyper::{body::Incoming as IncomingBody, Request, Response};
@@ -26,10 +26,16 @@ fn get_file(path: String) -> String {
 }
 
 #[derive(Debug, Clone)]
+pub struct LotteryServiceConfig {
+    pub host_prefix: String,
+    pub homepage: String,
+    pub name_source : String,
+}
+
+#[derive(Debug, Clone)]
 pub struct LotteryService {
     names: Arc<Mutex<Vec<String>>>,
-    host_prefix: String,
-    homepage: String,
+    config: LotteryServiceConfig,
 }
 
 impl LotteryService {
@@ -37,39 +43,45 @@ impl LotteryService {
      * Public constructor
      * Gets names from PDF
      */
-    pub fn new() -> LotteryService {
+    pub fn new(config: &LotteryServiceConfig) -> LotteryService {
         LotteryService {
             names : Arc::new(Mutex::new(vec![])),
-            host_prefix : "host/".to_string(),
-            homepage : "home.html".to_string(),
+            config: config.clone(),
         }
     }
 
-    /**
-     * Get immutable copy of shared names vector
-     */
-    fn get_names(&self) -> Vec<String> {
-        let mut names_guard = self.names.lock().unwrap();
-        names_guard.deref().clone()
-    }
+    fn update_names(&self) -> Result<(), String> {
+        let names_read = pdf::get_names(&self.config.name_source);
 
-    fn update_names(&self) {
-        pdf::get_names()
-    }
+        match names_read {
+            Ok(new_names) => {
+                /* Lock names and get mutable reference */
+                let mut names_guard = self.names.lock().unwrap();
+                let names = names_guard.deref_mut();
+        
+                /* set new names */
+                *names = new_names;
 
-    /**
-     * Serialize the name vector into JSON and save it to file for reading by the frontend
-     */
-    fn save_names_to_file(&self) -> io::Result<usize> {
-        let names = self.get_names();
-
-        let json = serde_json::to_string(&names)
-            .expect("Cannot serialize names");
-
-        let mut file = fs::File::open(NAMES_JSON_PATH)
-            .expect("Can't open JSON file");
-
-        file.write(&json.as_bytes())
+                let json = serde_json::to_string(&names)
+                .expect("Cannot serialize names");
+    
+                let mut file = fs::OpenOptions::new()
+                    .read(true)
+                    .write(true)
+                    .create(true)
+                    .open(self.config.host_prefix.clone() + NAMES_JSON_PATH)
+                    .expect("Can't open JSON file");
+        
+                match file.write(&json.as_bytes()) {
+                    Ok(bytes) => {
+                        println!("Written {bytes} bytes to {NAMES_JSON_PATH}");
+                        Ok(())
+                    },
+                    Err(error) => Err(error.to_string())
+                }
+            },
+            Err(error) => Err(error)
+        }
     }
 }
 
@@ -111,7 +123,16 @@ impl Service<Request<IncomingBody>> for LotteryService {
         match params.get(LOTTERY_PARAM) {
             Some(lottery) => {
                 match lottery.as_str() {
-                    "new" => self.save_names_to_file(),
+                    "new" => {
+                        match self.update_names() {
+                            Ok(_) => (),
+                            Err(error) => {
+                                return Box::pin(async move {
+                                    mk_generic_response(error.to_string())
+                                })
+                            }
+                        }
+                    },
                     _ => ()
                 }
             },
@@ -120,9 +141,9 @@ impl Service<Request<IncomingBody>> for LotteryService {
 
         /* Match a response to a request */
         let res = match req.uri().path() {
-            "/" => mk_file_response(self.host_prefix.clone() + self.homepage.as_str()),
-            "/names" => mk_generic_response(format!("names = {:?}", self.names.lock().unwrap().deref())),
-            requested_path => mk_file_response(self.host_prefix.clone() + requested_path),
+            "/" => mk_file_response(self.config.host_prefix.clone() + self.config.homepage.as_str()),
+            "/names" => mk_generic_response(format!("names = {:?}", self.names)),
+            requested_path => mk_file_response(self.config.host_prefix.clone() + requested_path),
         };
 
         Box::pin(async { res })

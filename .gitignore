@@ -1,2 +1,3 @@
 /target
 Cargo.lock
+host/names.json

@@ -2,15 +2,21 @@ use hyper::server::conn::http1;
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
 
+mod config;
 mod http_service;
 mod pdf;
-mod config;
+
+const CONFIG_PATH: &str = "config.toml";
 
 #[tokio::main]
 pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let config = config::LotteryConfig::new();
+    let config = config::LotteryConfig::new(CONFIG_PATH);
 
-    let service = http_service::LotteryService::new();
+    let service = http_service::LotteryService::new(&http_service::LotteryServiceConfig {
+        host_prefix: config.host_dir,
+        homepage: config.homepage,
+        name_source: config.name_source,
+    });
 
     // Bind to the port and listen for incoming TCP connections
     let listener = TcpListener::bind(config.socket).await?;
