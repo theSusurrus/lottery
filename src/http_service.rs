@@ -1,8 +1,10 @@
-use std::fs;
-use std::ops::{Deref, DerefMut};
+use std::{fs, io};
+use std::io::Write;
+use std::ops::{Deref};
 
 use hyper::service::Service;
 use hyper::{body::Incoming as IncomingBody, Request, Response};
+use serde_json;
 use std::pin::Pin;
 use std::future::Future;
 use http_body_util::Full;
@@ -14,6 +16,7 @@ use std::sync::{Arc, Mutex};
 use crate::pdf;
 
 const LOTTERY_PARAM: &str = "lottery";
+const NAMES_JSON_PATH: &str = "names.json";
 
 fn get_file(path: String) -> String {
     match fs::read_to_string(path) {
@@ -41,6 +44,33 @@ impl LotteryService {
             homepage : "home.html".to_string(),
         }
     }
+
+    /**
+     * Get immutable copy of shared names vector
+     */
+    fn get_names(&self) -> Vec<String> {
+        let mut names_guard = self.names.lock().unwrap();
+        names_guard.deref().clone()
+    }
+
+    fn update_names(&self) {
+        pdf::get_names()
+    }
+
+    /**
+     * Serialize the name vector into JSON and save it to file for reading by the frontend
+     */
+    fn save_names_to_file(&self) -> io::Result<usize> {
+        let names = self.get_names();
+
+        let json = serde_json::to_string(&names)
+            .expect("Cannot serialize names");
+
+        let mut file = fs::File::open(NAMES_JSON_PATH)
+            .expect("Can't open JSON file");
+
+        file.write(&json.as_bytes())
+    }
 }
 
 /**
@@ -54,12 +84,14 @@ impl Service<Request<IncomingBody>> for LotteryService {
 
     fn call(&self, req: Request<IncomingBody>) -> Self::Future {
         /* make a plaintext reponse */
-        let mk_generic_response = | s: String | -> Result<Response<Full<Bytes>>, hyper::Error> {
+        let mk_generic_response =
+            | s: String | -> Result<Response<Full<Bytes>>, hyper::Error> {
             Ok(Response::builder().body(Full::new(Bytes::from(s))).unwrap())
         };
 
         /* get file and return a Hyper Response containing it */
-        let mk_file_response = | path: String | -> Result<Response<Full<Bytes>>, hyper::Error> {
+        let mk_file_response =
+            | path: String | -> Result<Response<Full<Bytes>>, hyper::Error> {
             let html = get_file(path);
             Ok(Response::builder().body(Full::new(Bytes::from(html))).unwrap())
         };
@@ -79,12 +111,7 @@ impl Service<Request<IncomingBody>> for LotteryService {
         match params.get(LOTTERY_PARAM) {
             Some(lottery) => {
                 match lottery.as_str() {
-                    "new" => {
-                        let mut names_guard = self.names.lock().unwrap();
-                        let names = names_guard.deref_mut();
-                        names.clear();
-                        *names = pdf::get_names("test.pdf");
-                    },
+                    "new" => self.save_names_to_file(),
                     _ => ()
                 }
             },
