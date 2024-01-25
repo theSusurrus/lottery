@@ -1,62 +1,20 @@
-use std::net::SocketAddr;
-
-use http_body_util::Full;
-use hyper::body::Bytes;
 use hyper::server::conn::http1;
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
 
-use hyper::service::Service;
-use hyper::{body::Incoming as IncomingBody, Request, Response};
-use std::pin::Pin;
-use std::future::Future;
-
-mod frontend;
+mod http_service;
 mod pdf;
-
-#[derive(Debug, Clone)]
-struct LotteryService {
-    names: Vec<String>
-}
-
-impl Service<Request<IncomingBody>> for LotteryService {
-    type Response = Response<Full<Bytes>>;
-    type Error = hyper::Error;
-    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>;
-
-    fn call(&self, req: Request<IncomingBody>) -> Self::Future {
-        let mk_generic_response = | s: String | -> Result<Response<Full<Bytes>>, hyper::Error> {
-            Ok(Response::builder().body(Full::new(Bytes::from(s))).unwrap())
-        };
-
-        let mk_lottery_response = | | -> Result<Response<Full<Bytes>>, hyper::Error> {
-            let html = frontend::get_frontend(self.names.clone());
-            Ok(Response::builder().body(Full::new(Bytes::from(html))).unwrap())
-        };
-
-        let res = match req.uri().path() {
-            "/" => mk_generic_response(format!("home")),
-            "/names" => mk_generic_response(format!("names = {:?}", self.names)),
-            "/lottery" => mk_lottery_response(),
-            _ => mk_generic_response("oh no! not found".into()),
-        };
-
-        Box::pin(async { res })
-    }
-}
+mod config;
 
 #[tokio::main]
 pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let service = LotteryService {
-        names : pdf::get_names("test.pdf")
-    };
+    let config = config::LotteryConfig::new();
 
-    // This address is localhost
-    let addr: SocketAddr = ([127, 0, 0, 1], 3000).into();
+    let service = http_service::LotteryService::new();
 
     // Bind to the port and listen for incoming TCP connections
-    let listener = TcpListener::bind(addr).await?;
-    println!("Listening on http://{}", addr);
+    let listener = TcpListener::bind(config.socket).await?;
+    println!("Listening on http://{}", config.socket);
     loop {
         // When an incoming TCP connection is received grab a TCP stream for
         // client<->server communication.
