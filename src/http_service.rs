@@ -13,7 +13,7 @@ use url;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use crate::pdf;
+use crate::names::{TestProvider, Provider};
 
 const LOTTERY_PARAM: &str = "lottery";
 const NAMES_JSON_PATH: &str = "names.json";
@@ -41,7 +41,7 @@ fn get_file(path: String) -> Result<String, io::Error> {
 pub struct LotteryServiceConfig {
     pub host_prefix: String,
     pub homepage: String,
-    pub name_source : String,
+    pub name_provider: TestProvider,
 }
 
 #[derive(Debug, Clone)]
@@ -63,7 +63,7 @@ impl LotteryService {
     }
 
     fn update_names(&self) -> Result<(), String> {
-        let names_read = pdf::get_names(&self.config.name_source);
+        let names_read = self.config.name_provider.get_names();
 
         match names_read {
             Ok(new_names) => {

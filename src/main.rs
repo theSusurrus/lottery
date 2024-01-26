@@ -4,7 +4,7 @@ use tokio::net::TcpListener;
 
 mod config;
 mod http_service;
-mod pdf;
+mod names;
 
 const CONFIG_PATH: &str = "config.toml";
 
@@ -15,7 +15,7 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let service = http_service::LotteryService::new(&http_service::LotteryServiceConfig {
         host_prefix: config.host_dir,
         homepage: config.homepage,
-        name_source: config.name_source,
+        name_provider: names::TestProvider::new(),
     });
 
     // Bind to the port and listen for incoming TCP connections
