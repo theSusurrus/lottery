@@ -15,7 +15,7 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let service = http_service::LotteryService::new(&http_service::LotteryServiceConfig {
         host_prefix: config.host_dir,
         homepage: config.homepage,
-        name_provider: names::TestProvider::new(),
+        name_provider: &names::html::HtmlProvider::new(&config.name_source),
     });
 
     // Bind to the port and listen for incoming TCP connections

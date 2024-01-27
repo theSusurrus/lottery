@@ -1,14 +1,13 @@
 use crate::names;
 
-use std::fs::OpenOptions;
-use std::io::Read;
+use std::io::{Read, Error as IoError, ErrorKind as IoErrorKind};
+use html_parser::{Dom, Node, Node::{Text, Element as Element}, Element as ElementStruct};
 
-pub struct HTML {
+pub struct HtmlProvider {
     source_path: String,
-    source: String,
 }
 
-impl HTML {
+impl HtmlProvider {
     fn load_html(source_path: &str) -> Result<String, std::io::Error> {
         let mut file = std::fs::OpenOptions::new()
             .read(true)
@@ -19,37 +18,113 @@ impl HTML {
         Ok(contents)
     }
 
-    pub fn new(source_path: &str) -> Result<HTML, std::io::Error> {
-        let content =  Self::load_html(source_path)?;
-        Ok(
-            HTML {
-                source_path: source_path.to_string(),
-                source: content,
-            }
-        )
+    pub fn new(source_path: &str) -> HtmlProvider {
+        HtmlProvider {
+            source_path: source_path.to_string(),
+        }
     }
 }
 
-impl names::Provider for HTML {
-    fn get_names(&self) -> Result<Vec<String>, String> {
-        Ok(vec!["Jakub".to_string(), "Fiszu".to_string()])
+struct DomTraverser {
+    top_found: bool,
+    bottom_found: bool,
+    names: Vec<String>,
+}
+
+impl DomTraverser {
+    fn new() -> DomTraverser {
+        DomTraverser {
+            top_found: false,
+            bottom_found: false,
+            names: vec![],
+        }
+    }
+
+    fn traverse_node(&mut self, node: Node) {
+        const TOP_DIVIDER: &str = " ------------------------------------------------------------------------------- ";
+        const BOTTOM_DIVIER: &str = " EventLink - Copyright © 2023 - Wizards of the Coast LLC";
+    
+        /* For every element, traverse its children nodes */
+        let mut element_traverser = | element: ElementStruct | {
+            for node in element.children {
+                self.traverse_node(node);
+                if self.bottom_found {
+                    return;
+                }
+            }
+        };
+    
+        match node {
+            Text(string) => {
+                /* Only Text Elements are interesting for us */
+                if string.contains(TOP_DIVIDER) {
+                    self.top_found = true;
+                    return;
+                }
+
+                if string.contains(BOTTOM_DIVIER) {
+                    self.bottom_found = true;
+                    return;
+                }
+
+                if self.top_found && !self.bottom_found {
+                    /* filter garbage whitespace */
+                    let filtered_name =
+                        string.replace("&nbsp;", "")
+                              .replace("\r\n", "");
+                    let trimmed_name = filtered_name.trim();
+                    self.names.push(trimmed_name.to_string());
+                }
+            },
+            /* For every node, traverse its elements */
+            Element(element) => element_traverser(element),
+            _ => (),
+        }
+    }
+
+    fn traverse_dom(&mut self, dom: Dom) {
+        for node in dom.children {
+            self.traverse_node(node);
+            if self.bottom_found {
+                return;
+            }
+        }
+    }
+}
+
+impl names::Provider for HtmlProvider {
+    fn get_names(&self) -> Result<Vec<String>, std::io::Error> {
+        let source = Self::load_html(&self.source_path)?;
+
+        let dom = match Dom::parse(&source) {
+            Ok(dom) => dom,
+            Err(error) => return Err(
+                IoError::new(IoErrorKind::InvalidData, error)
+            ),
+        };
+
+        let mut traverser = DomTraverser::new();
+        traverser.traverse_dom(dom);
+
+        if traverser.names.len() > 1 {
+            Ok(traverser.names)
+        } else {
+            Err(IoError::new(IoErrorKind::InvalidData, "No names found in HTML"))
+        }
     }
 }
 
 mod tests {
     use std::vec;
-
     use crate::names::Provider;
-
     use super::*;
+     
     const TEST_FILEPATH: &str = "src/test_names.htm";
 
     #[test]
     fn file_parsing() {
-        let provider_creation = HTML::new(TEST_FILEPATH);
-        assert!(provider_creation.is_ok());
+        let provider = Provider::new(TEST_FILEPATH);
 
-        let provider = provider_creation.unwrap();
         let names_parsing = provider.get_names();
         assert!(names_parsing.is_ok());
 

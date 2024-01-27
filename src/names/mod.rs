@@ -3,23 +3,23 @@ use pdf_extract;
 pub mod html;
 
 pub trait Provider {
-    fn get_names(&self) -> Result<Vec<String>, String>;
+    fn get_names(&self) -> Result<Vec<String>, std::io::Error>;
 }
 
 #[derive(Debug, Clone)]
-pub struct TestProvider {
+pub struct GenericProvider {
 }
 
-impl TestProvider {
-    pub fn new() -> TestProvider {
-        TestProvider {
+impl GenericProvider {
+    pub fn new() -> GenericProvider {
+        GenericProvider {
         }
     }
 }
 
-impl Provider for TestProvider {
-    fn get_names(&self) -> Result<Vec<String>, String> {
-        Ok(vec!["Jakub".to_string(), "Fiszu".to_string()])
+impl Provider for GenericProvider {
+    fn get_names(&self) -> Result<Vec<String>, std::io::Error> {
+        Ok(vec![])
     }
 }
 
@@ -36,7 +36,7 @@ impl PDF {
 }
 
 impl Provider for PDF {
-    fn get_names(&self) -> Result<Vec<String>, String> {
+    fn get_names(&self) -> Result<Vec<String>, std::io::Error> {
         let out = pdf_extract::extract_text(self.source_path.as_str());
     
         match out {
@@ -49,7 +49,8 @@ impl Provider for PDF {
                 }
                 Ok(names)
             },
-            Err(error) => Err(error.to_string()),
+            Err(error) =>
+                Err(std::io::Error::new(std::io::ErrorKind::InvalidData, error)),
         }
     }
 }

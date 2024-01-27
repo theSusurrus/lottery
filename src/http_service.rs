@@ -13,7 +13,7 @@ use url;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use crate::names::{TestProvider, Provider};
+use crate::names::{self, Provider, GenericProvider};
 
 const LOTTERY_PARAM: &str = "lottery";
 const NAMES_JSON_PATH: &str = "names.json";
@@ -37,15 +37,24 @@ fn get_file(path: String) -> Result<String, io::Error> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct LotteryServiceConfig {
+#[derive(Clone)]
+pub struct LotteryServiceConfig<'a> {
     pub host_prefix: String,
     pub homepage: String,
-    pub name_provider: TestProvider,
+    pub name_provider: &'a dyn names::Provider,
+}
+
+impl std::fmt::Debug for LotteryServiceConfig<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'a>) -> std::fmt::Result {
+        f.debug_struct("LotteryServiceConfig")
+            .field("host_prefix", &self.host_prefix)
+            .field("homepage", &self.homepage)
+            .finish()
+    }
 }
 
 #[derive(Debug, Clone)]
-pub struct LotteryService {
+pub struct LotteryService<'a> {
     names: Arc<Mutex<Vec<String>>>,
     config: LotteryServiceConfig,
 }
@@ -92,7 +101,7 @@ impl LotteryService {
                     Err(error) => Err(error.to_string())
                 }
             },
-            Err(error) => Err(error)
+            Err(error) => Err(error.to_string())
         }
     }
 }
