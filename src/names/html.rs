@@ -116,16 +116,14 @@ impl names::Provider for HtmlProvider {
     }
 }
 
+#[cfg(test)]
 mod tests {
-    use std::vec;
     use crate::names::Provider;
     use super::*;
-     
-    const TEST_FILEPATH: &str = "src/test_names.htm";
 
     #[test]
     fn file_parsing() {
-        let provider = Provider::new(TEST_FILEPATH);
+        let provider = HtmlProvider::new("src/test_names.htm");
 
         let names_parsing = provider.get_names();
         assert!(names_parsing.is_ok());

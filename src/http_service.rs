@@ -13,7 +13,7 @@ use url;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use crate::names::{self, Provider, GenericProvider};
+use crate::names;
 
 const LOTTERY_PARAM: &str = "lottery";
 const NAMES_JSON_PATH: &str = "names.json";
