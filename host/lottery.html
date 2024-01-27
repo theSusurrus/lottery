@@ -41,14 +41,6 @@
     </textarea>
 <br>
 
-<!-- Force import via button -->
-<!--button type="button" 
-    style="width:100%; 
-    height:13vh; 
-    font-size: 6vw;" 
-    onclick="importList()">Import</button>
-<br-->
-
 <textarea id="pozostalo" 
     value="" 
     style="text-align:center;
@@ -98,6 +90,7 @@ let siteWidth = 414;
 let siteHeight = 896;
 let scale = screen.width /siteWidth;
 let scale2 = screen.height /siteHeight;
+let font = 0;
 
 document.querySelector('meta[name="viewport"]').setAttribute('content', 'width='+siteWidth+', initial-scale='+scale+'', 'height='+siteHeight+', initial-scale='+scale2+'');
 
@@ -106,24 +99,56 @@ let listaGraczy = [];
 let storedPamiec = JSON.parse(localStorage.getItem("losowaniePamiec"));
 let gracz = "";
 
-//Tutaj będzie pobieranie pliku z listą graczy z serwera
+//Dodanie opcji timeoutu 5s do funkcji fetch
+
+async function fetchWithTimeout(resource, options = {}) {
+  const { timeout = 5000 } = options;
+  
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+
+  const response = await fetch(resource, {
+    ...options,
+    signal: controller.signal  
+  });
+  clearTimeout(id);
+
+  return response;
+}
+
+//Pobiera wygenerowany plik names.json z listą graczy z serwera
+
 async function getNames () {
-    const response = await fetch('./names.json');
-    const importLista = await response.json();
-    listaGraczy = importLista;
-    displayLosowanie = listaGraczy.join('\n');
-    document.getElementById("lista").value = displayLosowanie;
-    document.getElementById("pozostalo").value = "Pozostało " + importLista.length + " graczy";
-    document.getElementById("losowany").style.backgroundColor="#3193c4"
-    gracz = "Import poprawny - liczba graczy: " + importLista.length;
-    document.getElementById("losowany").value = gracz;
+    try {
+        const response = await fetchWithTimeout('./names.json', {timeout: 5000});
+        const importLista = await response.json();
+        listaGraczy = importLista;
+    } catch (error) {
+        console.log("Import error!");
+    }
+
+    if (listaGraczy.length == 0) {
+        gracz = "Błąd importu!";
+        document.getElementById("losowany").style.backgroundColor="#7a1414"
+        document.getElementById("losowany").value = gracz;
+    } else {
+        displayLosowanie = listaGraczy.join('\n');
+        document.getElementById("lista").value = displayLosowanie;
+        document.getElementById("pozostalo").value = "Pozostało " + listaGraczy.length + " graczy";
+        document.getElementById("losowany").style.backgroundColor="#3193c4"
+        gracz = "Import poprawny - liczba graczy: " + listaGraczy.length;
+        document.getElementById("losowany").value = gracz;
+        font = 6+(2-0.2*listaGraczy.length)
+        document.getElementById("lista").style.fontSize = font + "vw";
+    }
 }
 
 if (storedPamiec == null) {
     getNames ();
 } else {
     listaGraczy = storedPamiec;
-    console.log(storedPamiec.length);
+    font = 6+(2-0.2*listaGraczy.length)
+        document.getElementById("lista").style.fontSize = font + "vw";
 }
 
 let listaGraczyPamiec = listaGraczy;
