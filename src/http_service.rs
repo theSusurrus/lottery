@@ -38,14 +38,14 @@ fn get_file(path: String) -> Result<String, io::Error> {
 }
 
 #[derive(Clone)]
-pub struct LotteryServiceConfig<'a> {
+pub struct LotteryServiceConfig {
     pub host_prefix: String,
     pub homepage: String,
-    pub name_provider: &'a dyn names::Provider,
+    pub name_provider: Arc<dyn names::Provider>,
 }
 
-impl std::fmt::Debug for LotteryServiceConfig<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'a>) -> std::fmt::Result {
+impl std::fmt::Debug for LotteryServiceConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_struct("LotteryServiceConfig")
             .field("host_prefix", &self.host_prefix)
             .field("homepage", &self.homepage)
@@ -54,7 +54,7 @@ impl std::fmt::Debug for LotteryServiceConfig<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub struct LotteryService<'a> {
+pub struct LotteryService {
     names: Arc<Mutex<Vec<String>>>,
     config: LotteryServiceConfig,
 }
