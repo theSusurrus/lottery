@@ -1,5 +1,7 @@
 use pdf_extract;
 
+pub mod html;
+
 pub trait Provider {
     fn get_names(&self) -> Result<Vec<String>, String>;
 }
@@ -49,23 +51,5 @@ impl Provider for PDF {
             },
             Err(error) => Err(error.to_string()),
         }
-    }
-}
-
-pub struct HTML {
-    source_path: String,
-}
-
-impl HTML {
-    pub fn new(source_path: &str) -> HTML {
-        HTML {
-            source_path: source_path.to_string()
-        }
-    }
-}
-
-impl Provider for HTML {
-    fn get_names(&self) -> Result<Vec<String>, String> {
-        Ok(vec!["Jakub".to_string(), "Fiszu".to_string()])
     }
 }
