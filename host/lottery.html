@@ -77,7 +77,7 @@
     line-height: 13vh;
     font-family: Arial; 
     color: #dddddd; 
-    font-size: 6vw; 
+    font-size: 4vw; 
     width:100%; 
     height:13vh;
     resize:none;
@@ -104,44 +104,48 @@ document.querySelector('meta[name="viewport"]').setAttribute('content', 'width='
 //Definiowanie zmiennych, sprawdzamy czy w pamięci jest zapisana lista graczy z poprzedniego losowania
 let listaGraczy = [];
 let storedPamiec = JSON.parse(localStorage.getItem("losowaniePamiec"));
+let gracz = "";
 
+//Tutaj będzie pobieranie pliku z listą graczy z serwera
 async function getNames () {
-    //listaGraczyURL = 'names.JSON';
     const response = await fetch('./names.json');
-    const test = await response.json();
-    console.log(test);
-    console.log(test.length);
+    const importLista = await response.json();
+    listaGraczy = importLista;
+    displayLosowanie = listaGraczy.join('\n');
+    document.getElementById("lista").value = displayLosowanie;
+    document.getElementById("pozostalo").value = "Pozostało " + importLista.length + " graczy";
+    document.getElementById("losowany").style.backgroundColor="#7a1414"
+    gracz = "Import poprawny - liczba graczy: " + importLista.length;
+    document.getElementById("losowany").value = gracz;
 }
 
 if (storedPamiec == null) {
-//Tutaj będzie pobieranie pliku z listą graczy z serwera
-    //listaGraczy = ["Adam", "Błażej Drużdż", "Czarek","Dawid", "Emil", "Filip", "Grzegorz", "Henryk"];
     getNames ();
 } else {
     listaGraczy = storedPamiec;
+    console.log(storedPamiec.length);
 }
+
 let listaGraczyPamiec = listaGraczy;
 let losowaniePamiec = listaGraczy;
-let losowanieLiczba = listaGraczy.length;
-let gracz = "";
 
-//Importowanie listy graczy, możliwość zmiany na wywołanie funkcji przyciskiem
+//Importowanie listy graczy
 
-//async function importList (){
-listaGraczy = listaGraczy.join('\n');
-//await new Promise(resolve => setTimeout(resolve, 500));
-document.getElementById("lista").value = listaGraczy;
-document.getElementById("pozostalo").value = "Pozostało " + losowaniePamiec.length + " graczy";
-if (listaGraczy.length == 0) {
-    document.getElementById("losowany").style.backgroundColor="#7a1414"
-    gracz = "Błąd importu"
-} else {
+if (listaGraczy.length != 0) {
     document.getElementById("losowany").style.backgroundColor="#2e6035"
-    gracz = "Import poprawny - liczba graczy: " + losowanieLiczba;
+    gracz = "Kontynuujemy - liczba graczy: " + losowaniePamiec.length;
+    document.getElementById("losowany").value = gracz;
 }
-document.getElementById("losowany").value = gracz;
+
+listaGraczy = listaGraczy.join('\n');
+document.getElementById("lista").value = listaGraczy;
+
+if (storedPamiec.length == 1) {
+        document.getElementById("pozostalo").value = "Pozostał " + storedPamiec.length + " gracz";
+    } else {
+        document.getElementById("pozostalo").value = "Pozostało " + storedPamiec.length + " graczy";
+    }
 listaGraczy = listaGraczyPamiec;
-//}
 
 //Mechanizm losowania - tworzy nowy array z usuniętą losową pozycją, wyświetla różnicę między arrayami
 
@@ -156,17 +160,19 @@ async function rollNext (){
     listaGraczy = losowaniePamiec;
     localStorage.setItem("losowaniePamiec", JSON.stringify(losowaniePamiec));
     document.getElementById("losowany").style.backgroundColor="#2e6035"
-    if (listaGraczy.length == 0) {
-        gracz = gracz + " - Koniec losowania"
-        localStorage.removeItem("losowaniePamiec");
-        document.getElementById("losowany").value = gracz;
-    } else {
-        document.getElementById("losowany").value = gracz;
-    }
+
     if (losowaniePamiec.length == 1) {
         document.getElementById("pozostalo").value = "Pozostał " + losowaniePamiec.length + " gracz";
     } else {
         document.getElementById("pozostalo").value = "Pozostało " + losowaniePamiec.length + " graczy";
+    }
+
+    if (listaGraczy.length == 0) {
+        gracz = gracz + " -> Koniec losowania"
+        localStorage.removeItem("losowaniePamiec");
+        document.getElementById("losowany").value = gracz;
+    } else {
+        document.getElementById("losowany").value = gracz;
     }
     
 }
