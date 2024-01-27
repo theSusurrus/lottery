@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=414, height=896, initial-scale=1">
+    <style>
+        a:link {
+            color: #10a8f0
+        }
+
+        a:visited {
+            color: #797979
+        }
+
+        .textarea {
+            padding-top: 177.77%;
+            width: 100%;
+            background-color: #2e3035;
+        }
+
+        .button {
+            position: relative;
+            bottom: 0;
+        }
+    </style>
+</head>
+
+<body bgcolor="#2e3035">
+
+<textarea id="lista" 
+    value="" 
+    style="font-family: Arial; 
+    color: #dddddd; 
+    font-size:5vw; 
+    width:100%; 
+    height:60vh;
+    resize:none;
+    border:none;  
+    background-color:#2e3035" 
+    readonly>
+    </textarea>
+<br>
+
+<!-- Force import via button -->
+<!--button type="button" 
+    style="width:100%; 
+    height:13vh; 
+    font-size: 6vw;" 
+    onclick="importList()">Import</button>
+<br-->
+
+<textarea id="pozostalo" 
+    value="" 
+    style="text-align:center;
+    line-height: 4vh; 
+    font-family: Arial; 
+    color: #dddddd; 
+    font-size: 4vw; 
+    width:100%; 
+    height:4vh;
+    resize:none;
+    border:none; 
+    background-color:#2e3035" 
+    readonly>
+</textarea>
+
+<button type="button" 
+    style="width:100%; 
+    height:13vh; 
+    font-size: 6vw;" 
+    onclick="rollNext()">Roll the dice!</button>
+<br>
+
+<textarea id="losowany" 
+    value="" 
+    style="text-align:center; 
+    line-height: 13vh;
+    font-family: Arial; 
+    color: #dddddd; 
+    font-size: 4vw; 
+    width:100%; 
+    height:13vh;
+    resize:none;
+    border:none;  
+    background-color:#2e3035" 
+    readonly>
+</textarea>
+<br>
+<p style="color:white; font-family: Arial">
+<i>Apka do losowania nagród stworzona na potrzeby sklepu Gralnia
+<br>
+2024, <a href="https://github.com/theSusurrus/lottery">github.com/theSusurrus/lottery</a></i>
+</p>
+
+<script>
+
+let siteWidth = 414;
+let siteHeight = 896;
+let scale = screen.width /siteWidth;
+let scale2 = screen.height /siteHeight;
+
+document.querySelector('meta[name="viewport"]').setAttribute('content', 'width='+siteWidth+', initial-scale='+scale+'', 'height='+siteHeight+', initial-scale='+scale2+'');
+
+//Definiowanie zmiennych, sprawdzamy czy w pamięci jest zapisana lista graczy z poprzedniego losowania
+let listaGraczy = [];
+let storedPamiec = JSON.parse(localStorage.getItem("losowaniePamiec"));
+let gracz = "";
+
+//Tutaj będzie pobieranie pliku z listą graczy z serwera
+async function getNames () {
+    const response = await fetch('./names.json');
+    const importLista = await response.json();
+    listaGraczy = importLista;
+    displayLosowanie = listaGraczy.join('\n');
+    document.getElementById("lista").value = displayLosowanie;
+    document.getElementById("pozostalo").value = "Pozostało " + importLista.length + " graczy";
+    document.getElementById("losowany").style.backgroundColor="#7a1414"
+    gracz = "Import poprawny - liczba graczy: " + importLista.length;
+    document.getElementById("losowany").value = gracz;
+}
+
+if (storedPamiec == null) {
+    getNames ();
+} else {
+    listaGraczy = storedPamiec;
+    console.log(storedPamiec.length);
+}
+
+let listaGraczyPamiec = listaGraczy;
+let losowaniePamiec = listaGraczy;
+
+//Importowanie listy graczy
+
+if (listaGraczy.length != 0) {
+    document.getElementById("losowany").style.backgroundColor="#2e6035"
+    gracz = "Kontynuujemy - liczba graczy: " + losowaniePamiec.length;
+    document.getElementById("losowany").value = gracz;
+}
+
+listaGraczy = listaGraczy.join('\n');
+document.getElementById("lista").value = listaGraczy;
+
+if (storedPamiec.length == 1) {
+        document.getElementById("pozostalo").value = "Pozostał " + storedPamiec.length + " gracz";
+    } else {
+        document.getElementById("pozostalo").value = "Pozostało " + storedPamiec.length + " graczy";
+    }
+listaGraczy = listaGraczyPamiec;
+
+//Mechanizm losowania - tworzy nowy array z usuniętą losową pozycją, wyświetla różnicę między arrayami
+
+async function rollNext (){
+    document.getElementById("losowany").style.backgroundColor="#2e3035"
+    await new Promise(resolve => setTimeout(resolve, 500));
+    losowaniePamiec= listaGraczy.toSpliced(Math.floor(Math.random()*listaGraczy.length),1);
+    gracz = listaGraczy.filter(x => !losowaniePamiec.includes(x));
+    listaGraczy = listaGraczy.join('\n');
+    displayLosowanie = losowaniePamiec.join('\n');
+    document.getElementById("lista").value = displayLosowanie;
+    listaGraczy = losowaniePamiec;
+    localStorage.setItem("losowaniePamiec", JSON.stringify(losowaniePamiec));
+    document.getElementById("losowany").style.backgroundColor="#2e6035"
+
+    if (losowaniePamiec.length == 1) {
+        document.getElementById("pozostalo").value = "Pozostał " + losowaniePamiec.length + " gracz";
+    } else {
+        document.getElementById("pozostalo").value = "Pozostało " + losowaniePamiec.length + " graczy";
+    }
+
+    if (listaGraczy.length == 0) {
+        gracz = gracz + " -> Koniec losowania"
+        localStorage.removeItem("losowaniePamiec");
+        document.getElementById("losowany").value = gracz;
+    } else {
+        document.getElementById("losowany").value = gracz;
+    }
+    
+}
+
+</script>
+
+</body>
+
+</html>
