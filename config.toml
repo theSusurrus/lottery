@@ -1,5 +1,5 @@
 address = "127.0.0.1"
 port = 3000
 host_dir = "host/"
-home = "home.html"
+home = "lottery.html"
 name_source = "src/test_names.htm"
