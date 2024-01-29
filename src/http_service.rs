@@ -1,6 +1,6 @@
 use std::{fs, io};
 use std::io::{Read, Write};
-use std::ops::{DerefMut};
+use std::ops::DerefMut;
 
 use hyper::service::Service;
 use hyper::{body::Incoming as IncomingBody, Request, Response};
@@ -19,22 +19,11 @@ const LOTTERY_PARAM: &str = "lottery";
 const NAMES_JSON_PATH: &str = "names.json";
 
 fn get_file(path: String) -> Result<String, io::Error> {
-    match fs::File::open(path) {
-        Ok(mut file) => {
-            let mut contents = Vec::new();
-            match file.read_to_end(&mut contents) {
-                Ok(_) => {
-                    match String::from_utf8(contents) {
-                        Ok(string) => Ok(string),
-                        Err(error) =>
-                            Err(io::Error::new(io::ErrorKind::InvalidData, error)),
-                    }
-                },
-                Err(error) => Err(error),
-            }
-        },
-        Err(error) => Err(error)
-    }
+    let mut file = fs::File::open(path)?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+
+    Ok(contents)
 }
 
 #[derive(Clone)]
