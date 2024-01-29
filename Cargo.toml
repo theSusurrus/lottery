@@ -10,7 +10,7 @@ hyper = { version = "1", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
 http-body-util = "0.1"
 hyper-util = { version = "0.1", features = ["full"] }
-pdf-extract = "0.7.4"
 config = "0.13.4"
 url = "2.5.0"
 serde_json = "1.0.111"
+html_parser = "0.7.0"

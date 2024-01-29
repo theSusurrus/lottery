@@ -13,7 +13,7 @@ use url;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use crate::pdf;
+use crate::names;
 
 const LOTTERY_PARAM: &str = "lottery";
 const NAMES_JSON_PATH: &str = "names.json";
@@ -37,11 +37,20 @@ fn get_file(path: String) -> Result<String, io::Error> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct LotteryServiceConfig {
     pub host_prefix: String,
     pub homepage: String,
-    pub name_source : String,
+    pub name_provider: Arc<dyn names::Provider>,
+}
+
+impl std::fmt::Debug for LotteryServiceConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.debug_struct("LotteryServiceConfig")
+            .field("host_prefix", &self.host_prefix)
+            .field("homepage", &self.homepage)
+            .finish()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -63,7 +72,7 @@ impl LotteryService {
     }
 
     fn update_names(&self) -> Result<(), String> {
-        let names_read = pdf::get_names(&self.config.name_source);
+        let names_read = self.config.name_provider.get_names();
 
         match names_read {
             Ok(new_names) => {
@@ -92,7 +101,7 @@ impl LotteryService {
                     Err(error) => Err(error.to_string())
                 }
             },
-            Err(error) => Err(error)
+            Err(error) => Err(error.to_string())
         }
     }
 }
