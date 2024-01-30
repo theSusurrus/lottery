@@ -104,7 +104,7 @@ impl Service<Request<IncomingBody>> for LotteryService {
     type Error = hyper::Error;
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>;
 
-    fn call(&self, req: Request<IncomingBody>) -> Self::Future {
+    fn call(&self, request: Request<IncomingBody>) -> Self::Future {
         /* make a plaintext reponse */
         let mk_generic_response =
             | s: String | -> Result<Response<Full<Bytes>>, hyper::Error> {
@@ -135,7 +135,7 @@ impl Service<Request<IncomingBody>> for LotteryService {
             
         };
 
-        let params: HashMap<String, String> = req
+        let params: HashMap<String, String> = request
             .uri()
             .query()
             .map(|v| {
@@ -145,7 +145,7 @@ impl Service<Request<IncomingBody>> for LotteryService {
             })
             .unwrap_or_else(HashMap::new);
 
-        println!("{:?} {}\n\tparams={:?}", req.method(), req.uri(), params);
+        println!("{:?} {}\n\tparams={:?}", request.method(), request.uri(), params);
 
         match params.get(LOTTERY_PARAM).cloned().as_deref() {
             Some("new") => {
@@ -165,12 +165,13 @@ impl Service<Request<IncomingBody>> for LotteryService {
         }
 
         /* Match a response to a request */
-        let res = match req.uri().path() {
+        let response = match request.uri().path() {
             "/" => mk_file_response(self.config.host_prefix.clone() + self.config.homepage.as_str()),
             "/names" => mk_generic_response(format!("names = {:?}", self.names)),
             requested_path => mk_file_response(self.config.host_prefix.clone() + requested_path),
         };
 
-        Box::pin(async { res })
+        /* Allocate a Box for storing the response */
+        Box::pin(async { response })
     }
 }
