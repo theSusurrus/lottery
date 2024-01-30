@@ -108,7 +108,7 @@ let gracz = "";
 
 //Tutaj będzie pobieranie pliku z listą graczy z serwera
 async function getNames () {
-    const response = await fetch('./names.json');
+    const response = await fetch('./names.json?lottery=new');
     const importLista = await response.json();
     listaGraczy = importLista;
     displayLosowanie = listaGraczy.join('\n');
