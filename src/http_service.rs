@@ -1,6 +1,6 @@
 use std::{fs, io};
 use std::io::{Read, Write};
-use std::ops::{DerefMut};
+use std::ops::DerefMut;
 
 use hyper::service::Service;
 use hyper::{body::Incoming as IncomingBody, Request, Response};
@@ -19,22 +19,11 @@ const LOTTERY_PARAM: &str = "lottery";
 const NAMES_JSON_PATH: &str = "names.json";
 
 fn get_file(path: String) -> Result<String, io::Error> {
-    match fs::File::open(path) {
-        Ok(mut file) => {
-            let mut contents = Vec::new();
-            match file.read_to_end(&mut contents) {
-                Ok(_) => {
-                    match String::from_utf8(contents) {
-                        Ok(string) => Ok(string),
-                        Err(error) =>
-                            Err(io::Error::new(io::ErrorKind::InvalidData, error)),
-                    }
-                },
-                Err(error) => Err(error),
-            }
-        },
-        Err(error) => Err(error)
-    }
+    let mut file = fs::File::open(path)?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+
+    Ok(contents)
 }
 
 #[derive(Clone)]
@@ -115,7 +104,7 @@ impl Service<Request<IncomingBody>> for LotteryService {
     type Error = hyper::Error;
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>;
 
-    fn call(&self, req: Request<IncomingBody>) -> Self::Future {
+    fn call(&self, request: Request<IncomingBody>) -> Self::Future {
         /* make a plaintext reponse */
         let mk_generic_response =
             | s: String | -> Result<Response<Full<Bytes>>, hyper::Error> {
@@ -146,7 +135,7 @@ impl Service<Request<IncomingBody>> for LotteryService {
             
         };
 
-        let params: HashMap<String, String> = req
+        let params: HashMap<String, String> = request
             .uri()
             .query()
             .map(|v| {
@@ -156,38 +145,33 @@ impl Service<Request<IncomingBody>> for LotteryService {
             })
             .unwrap_or_else(HashMap::new);
 
-        println!("{:?} {}\n\tparams={:?}", req.method(), req.uri(), params);
-        
-        match params.get(LOTTERY_PARAM) {
-            /* lottery query found */
-            Some(lottery) => {
-                match lottery.as_str() {
-                    /* if lottery=new, update the names in self and json */
-                    "new" => {
-                        match self.update_names() {
-                            Ok(_) => (),
-                            Err(error) => {
-                                return Box::pin(async move {
-                                    mk_generic_response(error.to_string())
-                                })
-                            }
-                        }
+        println!("{:?} {}\n\tparams={:?}", request.method(), request.uri(), params);
+
+        match params.get(LOTTERY_PARAM).cloned().as_deref() {
+            Some("new") => {
+                /* lottery=new, update the names in self and json */
+                match self.update_names() {
+                    Err(error) => {
+                        return Box::pin(async move {
+                            mk_generic_response(error.to_string())
+                        })
                     },
-                    /* lottery != new, do nothing */
-                    _ => ()
+                    /* Update sucessful, continue */
+                    _ => (),
                 }
             },
-            /* lottery query not found, do nothing */
-            None => ()
-        };
+            /* lottery != new, do nothing */
+            _ => (),
+        }
 
         /* Match a response to a request */
-        let res = match req.uri().path() {
+        let response = match request.uri().path() {
             "/" => mk_file_response(self.config.host_prefix.clone() + self.config.homepage.as_str()),
             "/names" => mk_generic_response(format!("names = {:?}", self.names)),
             requested_path => mk_file_response(self.config.host_prefix.clone() + requested_path),
         };
 
-        Box::pin(async { res })
+        /* Allocate a Box for storing the response */
+        Box::pin(async { response })
     }
 }
