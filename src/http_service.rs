@@ -146,29 +146,23 @@ impl Service<Request<IncomingBody>> for LotteryService {
             .unwrap_or_else(HashMap::new);
 
         println!("{:?} {}\n\tparams={:?}", req.method(), req.uri(), params);
-        
-        match params.get(LOTTERY_PARAM) {
-            /* lottery query found */
-            Some(lottery) => {
-                match lottery.as_str() {
-                    /* if lottery=new, update the names in self and json */
-                    "new" => {
-                        match self.update_names() {
-                            Ok(_) => (),
-                            Err(error) => {
-                                return Box::pin(async move {
-                                    mk_generic_response(error.to_string())
-                                })
-                            }
-                        }
+
+        match params.get(LOTTERY_PARAM).cloned().as_deref() {
+            Some("new") => {
+                /* lottery=new, update the names in self and json */
+                match self.update_names() {
+                    Err(error) => {
+                        return Box::pin(async move {
+                            mk_generic_response(error.to_string())
+                        })
                     },
-                    /* lottery != new, do nothing */
-                    _ => ()
+                    /* Update sucessful, continue */
+                    _ => (),
                 }
             },
-            /* lottery query not found, do nothing */
-            None => ()
-        };
+            /* lottery != new, do nothing */
+            _ => (),
+        }
 
         /* Match a response to a request */
         let res = match req.uri().path() {
