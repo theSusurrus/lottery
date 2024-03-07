@@ -27,7 +27,7 @@
 
 <body bgcolor="#2e3035">
 
-<textarea id="lista" 
+<textarea id="listOfPlayersTextArea" 
     value="" 
     style="font-family: Arial; 
     color: #dddddd; 
@@ -41,15 +41,7 @@
     </textarea>
 <br>
 
-<!-- Force import via button -->
-<!--button type="button" 
-    style="width:100%; 
-    height:13vh; 
-    font-size: 6vw;" 
-    onclick="importList()">Import</button>
-<br-->
-
-<textarea id="pozostalo" 
+<textarea id="playersRemainingTextArea" 
     value="" 
     style="text-align:center;
     line-height: 4vh; 
@@ -71,7 +63,7 @@
     onclick="rollNext()">Roll the dice!</button>
 <br>
 
-<textarea id="losowany" 
+<textarea id="playersWinnerTextArea" 
     value="" 
     style="text-align:center; 
     line-height: 13vh;
@@ -101,78 +93,80 @@ let scale2 = screen.height /siteHeight;
 
 document.querySelector('meta[name="viewport"]').setAttribute('content', 'width='+siteWidth+', initial-scale='+scale+'', 'height='+siteHeight+', initial-scale='+scale2+'');
 
-//Definiowanie zmiennych, sprawdzamy czy w pamięci jest zapisana lista graczy z poprzedniego losowania
-let listaGraczy = [];
-let storedPamiec = JSON.parse(localStorage.getItem("losowaniePamiec"));
-let gracz = "";
+//Defining the players variables, importing a previous unfinished list of players in local storage if there is one
+let playersList = [];
+let storedMemory = JSON.parse(localStorage.getItem("raffleMemory"));
+let player = "";
 
-//Tutaj będzie pobieranie pliku z listą graczy z serwera
+//Fetching players from the server
 async function getNames () {
     const response = await fetch('./names.json?lottery=new');
-    const importLista = await response.json();
-    listaGraczy = importLista;
-    displayLosowanie = listaGraczy.join('\n');
-    document.getElementById("lista").value = displayLosowanie;
-    document.getElementById("pozostalo").value = "Pozostało " + importLista.length + " graczy";
-    document.getElementById("losowany").style.backgroundColor="#3193c4"
-    gracz = "Import poprawny - liczba graczy: " + importLista.length;
-    document.getElementById("losowany").value = gracz;
+    const importedList = await response.json();
+    playersList = importedList;
+    raffleDisplay = playersList.join('\n');
+    document.getElementById("listOfPlayersTextArea").value = raffleDisplay;
+    document.getElementById("playersRemainingTextArea").value = "Pozostało " + importedList.length + " graczy";
+    document.getElementById("playersWinnerTextArea").style.backgroundColor="#3193c4"
+    player = "Import poprawny - liczba graczy: " + importedList.length;
+    document.getElementById("playersWinnerTextArea").value = player;
 }
 
-if (storedPamiec == null) {
+//Checking if there is an unfinished raffle to load the list of players from memory
+if (storedMemory == null) {
     getNames ();
 } else {
-    listaGraczy = storedPamiec;
-    console.log(storedPamiec.length);
+    playersList = storedMemory;
+    console.log(storedMemory.length);
 }
 
-let listaGraczyPamiec = listaGraczy;
-let losowaniePamiec = listaGraczy;
+let playersListPamiec = playersList;
+let raffleMemory = playersList;
 
-//Importowanie listy graczy
-
-if (listaGraczy.length != 0) {
-    document.getElementById("losowany").style.backgroundColor="#2e6035"
-    gracz = "Kontynuujemy - liczba graczy: " + losowaniePamiec.length;
-    document.getElementById("losowany").value = gracz;
+//Continuing the raffle with previously loaded players
+if (playersList.length != 0) {
+    document.getElementById("playersWinnerTextArea").style.backgroundColor="#2e6035"
+    player = "Kontynuujemy - liczba graczy: " + raffleMemory.length;
+    document.getElementById("playersWinnerTextArea").value = player;
 }
 
-listaGraczy = listaGraczy.join('\n');
-document.getElementById("lista").value = listaGraczy;
+playersList = playersList.join('\n');
+document.getElementById("listOfPlayersTextArea").value = playersList;
 
-if (storedPamiec.length == 1) {
-        document.getElementById("pozostalo").value = "Pozostał " + storedPamiec.length + " gracz";
+if (storedMemory.length == 1) {
+        document.getElementById("playersRemainingTextArea").value = "Pozostał " + storedMemory.length + " gracz";
     } else {
-        document.getElementById("pozostalo").value = "Pozostało " + storedPamiec.length + " graczy";
+        document.getElementById("playersRemainingTextArea").value = "Pozostało " + storedMemory.length + " graczy";
     }
-listaGraczy = listaGraczyPamiec;
+playersList = playersListPamiec;
 
-//Mechanizm losowania - tworzy nowy array z usuniętą losową pozycją, wyświetla różnicę między arrayami
+//Raffle mechanism - creates a new array with a random item deleted, displays the difference between the new array and the previous one
 
 async function rollNext (){
-    document.getElementById("losowany").style.backgroundColor="#2e3035"
+    document.getElementById("playersWinnerTextArea").style.backgroundColor="#2e3035"
     await new Promise(resolve => setTimeout(resolve, 500));
-    losowaniePamiec= listaGraczy.toSpliced(Math.floor(Math.random()*listaGraczy.length),1);
-    gracz = listaGraczy.filter(x => !losowaniePamiec.includes(x));
-    listaGraczy = listaGraczy.join('\n');
-    displayLosowanie = losowaniePamiec.join('\n');
-    document.getElementById("lista").value = displayLosowanie;
-    listaGraczy = losowaniePamiec;
-    localStorage.setItem("losowaniePamiec", JSON.stringify(losowaniePamiec));
-    document.getElementById("losowany").style.backgroundColor="#2e6035"
+    raffleMemory= playersList.toSpliced(Math.floor(Math.random()*playersList.length),1);
+    player = playersList.filter(x => !raffleMemory.includes(x));
+    playersList = playersList.join('\n');
+    raffleDisplay = raffleMemory.join('\n');
+    document.getElementById("listOfPlayersTextArea").value = raffleDisplay;
+    playersList = raffleMemory;
+    localStorage.setItem("raffleMemory", JSON.stringify(raffleMemory));
+    document.getElementById("playersWinnerTextArea").style.backgroundColor="#2e6035"
 
-    if (losowaniePamiec.length == 1) {
-        document.getElementById("pozostalo").value = "Pozostał " + losowaniePamiec.length + " gracz";
+//Displaying the number of remaining player(s)
+
+    if (raffleMemory.length == 1) {
+        document.getElementById("playersRemainingTextArea").value = "Pozostał " + raffleMemory.length + " gracz";
     } else {
-        document.getElementById("pozostalo").value = "Pozostało " + losowaniePamiec.length + " graczy";
+        document.getElementById("playersRemainingTextArea").value = "Pozostało " + raffleMemory.length + " graczy";
     }
 
-    if (listaGraczy.length == 0) {
-        gracz = gracz + " -> Koniec losowania"
-        localStorage.removeItem("losowaniePamiec");
-        document.getElementById("losowany").value = gracz;
+    if (playersList.length == 0) {
+        player = player + " -> Koniec losowania"
+        localStorage.removeItem("raffleMemory");
+        document.getElementById("playersWinnerTextArea").value = player;
     } else {
-        document.getElementById("losowany").value = gracz;
+        document.getElementById("playersWinnerTextArea").value = player;
     }
     
 }
