@@ -42,7 +42,7 @@ impl DomTraverser {
 
     fn traverse_node(&mut self, node: Node) {
         const TOP_DIVIDER: &str = " ------------------------------------------------------------------------------- ";
-        const BOTTOM_DIVIER: &str = " EventLink - Copyright © 2023 - Wizards of the Coast LLC";
+        const BOTTOM_DIVIER: &str = " EventLink - Copyright";
     
         /* For every element, traverse its children nodes */
         let mut element_traverser = | element: ElementStruct | {

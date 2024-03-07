@@ -76,6 +76,7 @@ impl LotteryService {
                 .expect("Cannot serialize names");
     
                 let mut file = fs::OpenOptions::new()
+                    .truncate(true)
                     .read(true)
                     .write(true)
                     .create(true)
