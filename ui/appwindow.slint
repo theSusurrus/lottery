@@ -1,0 +1,73 @@
+import { AboutSlint, Button, VerticalBox, LineEdit, HorizontalBox, ListView, ScrollView } from "std-widgets.slint";
+
+export component AppWindow inherits Window {
+    callback draw_person;
+    callback restart;
+
+    in-out property <string> status;
+    in-out property <string> list;
+    in-out property <string> listFile;
+    in-out property <string> winner;
+
+    width: 600px;
+    VerticalBox {
+        alignment: start;
+        Text {
+            text: "Loteria";
+            font-size: 24px;
+            horizontal-alignment: center;
+        }
+        Flickable {
+            height: parent.height / 2;
+            Text {
+                text: list;
+                font-size: 16px;
+                horizontal-alignment: center;
+            }
+        }
+        Text {
+            text: status;
+            font-size: 16px;
+            horizontal-alignment: center;
+        }
+        Text {
+            text: winner;
+            font-size: 24px;
+            horizontal-alignment: center;
+        }
+        VerticalLayout {
+            alignment: center;
+            Button {
+                text: "Wylosuj";
+                width: parent.width / 2;
+                x: parent.width / 4;
+                clicked => { draw_person() }
+            }
+            Button {
+                text: "Przeładuj listę";
+                width: parent.width / 2;
+                x: parent.width / 4;
+                clicked => { restart() }
+            }
+            VerticalBox {
+                Text {
+                    horizontal-alignment: center;
+                    text: "Konfiguracja";
+                }
+                VerticalBox {
+                    Text {
+                        text: "plik listy";
+                        horizontal-alignment: center;
+                    }
+                    LineEdit {
+                        text: listFile;
+                        font-size: 12px;
+                        horizontal-alignment: center;
+                        width: parent.width / 2;
+                        x: parent.width / 4;
+                    }
+                }
+            }
+        }
+    }
+}
