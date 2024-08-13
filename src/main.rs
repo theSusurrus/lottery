@@ -13,6 +13,10 @@ fn names_to_string(names: &Vec<String>) -> String {
     names.join("\n").into()
 }
 
+fn generate_status(names: &Vec<String>) -> String {
+    "Zostało ".to_owned() + &names.len().to_string()
+}
+
 fn main() -> Result<(), slint::PlatformError> {
     let config: config::LotteryConfig = config::LotteryConfig::new(CONFIG_PATH);
 
@@ -24,8 +28,8 @@ fn main() -> Result<(), slint::PlatformError> {
 
     let ui = AppWindow::new()?;
     
+    ui.set_status(generate_status(&names.lock().unwrap()).into());
     ui.set_list(names_to_string(&names.lock().unwrap()).into());
-
     ui.set_listFile(config.name_source.into());
 
     ui.on_draw_person({
@@ -41,6 +45,7 @@ fn main() -> Result<(), slint::PlatformError> {
                 let name = names[random_index].clone();
                 names.remove(random_index);
     
+                ui.set_status(generate_status(&names).into());
                 ui.set_list(names_to_string(&names).into());
                 ui.set_winner(name.into());
             } else {
@@ -61,6 +66,7 @@ fn main() -> Result<(), slint::PlatformError> {
 
             *names = provider.get_names().unwrap();
 
+            ui.set_status(generate_status(&names).into());
             ui.set_list(names_to_string(&names).into());
             ui.set_winner("".into());
         }
