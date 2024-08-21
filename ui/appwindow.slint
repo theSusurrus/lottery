@@ -1,0 +1,61 @@
+import { AboutSlint, Button, VerticalBox, LineEdit, HorizontalBox, ListView, ScrollView } from "std-widgets.slint";
+
+export component AppWindow inherits Window {
+    callback draw_person;
+    callback restart;
+
+    in-out property <string> status;
+    in-out property <string> list;
+    in-out property <string> listFile;
+    in-out property <string> winner;
+
+    width: 600px;
+    preferred-height: 1000px;
+    VerticalLayout {
+        alignment: start;
+        Text {
+            text: list;
+            font-size: 16px;
+            horizontal-alignment: center;
+        }
+    }
+    VerticalLayout {
+        alignment: end;
+        Text {
+            text: status;
+            font-size: 16px;
+            horizontal-alignment: center;
+        }
+        Text {
+            text: winner;
+            font-size: 24px;
+            horizontal-alignment: center;
+        }
+        Button {
+            text: "Wylosuj";
+            width: parent.width / 2;
+            x: parent.width / 4;
+            clicked => { draw_person() }
+        }
+        Button {
+            text: "Przeładuj listę";
+            width: parent.width / 2;
+            x: parent.width / 4;
+            clicked => { restart() }
+        }
+        HorizontalBox {
+            alignment: stretch;
+            Text {
+                text: "plik listy";
+                width: parent.width / 3;
+                vertical-alignment: center;
+                horizontal-alignment: right;
+            }
+            LineEdit {
+                text: listFile;
+                font-size: 12px;
+                width: parent.width / 3;
+            }
+        }
+    }
+}

@@ -14,3 +14,8 @@ config = "0.13.4"
 url = "2.5.0"
 serde_json = "1.0.111"
 html_parser = "0.7.0"
+slint = "1.6"
+rand = "0.8.5"
+
+[build-dependencies]
+slint-build = "1.6"
