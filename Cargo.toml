@@ -16,6 +16,7 @@ serde_json = "1.0.111"
 html_parser = "0.7.0"
 slint = "1.6"
 rand = "0.8.5"
+chrono = "0.4.38"
 
 [build-dependencies]
 slint-build = "1.6"

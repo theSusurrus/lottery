@@ -108,7 +108,7 @@ impl names::Provider for HtmlProvider {
 
         let names = traverser.names;
         if names.len() > 1 {
-            println!("HTML provider names = {:?}", names);
+            // println!("HTML provider names = {:?}", names);
             Ok(names)
         } else {
             Err(IoError::new(IoErrorKind::InvalidData, "No names found in HTML"))
