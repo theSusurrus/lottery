@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use chrono::{Datelike, Timelike};
 use names::Provider;
 use rand;
