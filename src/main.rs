@@ -37,7 +37,7 @@ fn get_log_name() -> String {
         time.hour(),
         time.minute(),
         time.second());
-    
+
     path
 }
 
@@ -63,7 +63,7 @@ fn main() -> Result<(), slint::PlatformError> {
             Mutex::new(
                 provider.get_names().unwrap()));
 
-    let log_context = 
+    let log_context =
         Arc::new(Mutex::new(
             LogContext {
                 filename: get_log_name(),
@@ -72,7 +72,7 @@ fn main() -> Result<(), slint::PlatformError> {
     open_log(log_context.lock().unwrap().filename.clone());
 
     let ui = AppWindow::new()?;
-    
+
     ui.set_status(generate_status(&names.lock().unwrap()).into());
     ui.set_list(names_to_string(&names.lock().unwrap()).into());
     ui.set_listFile(config.name_source.into());
@@ -91,10 +91,10 @@ fn main() -> Result<(), slint::PlatformError> {
                 let random_index = rand::random::<usize>() % names.len();
                 let name = names[random_index].clone();
                 names.remove(random_index);
-                
+
                 let name_line = format!("{}\n", name);
                 write_to_log(log_context.filename.clone(), name_line.as_bytes());
-    
+
                 ui.set_status(generate_status(&names).into());
                 ui.set_list(names_to_string(&names).into());
                 ui.set_winner(name.into());
