@@ -1,4 +1,4 @@
-import { AboutSlint, Button, VerticalBox, LineEdit, HorizontalBox, ListView, ScrollView } from "std-widgets.slint";
+import { AboutSlint, Button, StandardButton, VerticalBox, LineEdit, HorizontalBox, ListView, ScrollView, StandardButton } from "std-widgets.slint";
 
 export component AppWindow inherits Window {
     callback draw_person;
@@ -37,12 +37,6 @@ export component AppWindow inherits Window {
             x: parent.width / 4;
             clicked => { draw_person() }
         }
-        Button {
-            text: "Przeładuj listę";
-            width: parent.width / 2;
-            x: parent.width / 4;
-            clicked => { restart() }
-        }
         HorizontalBox {
             alignment: stretch;
             Text {
@@ -56,6 +50,31 @@ export component AppWindow inherits Window {
                 font-size: 12px;
                 width: parent.width / 3;
             }
+        }
+
+        popup := PopupWindow {
+            Rectangle { height:100%; width: 100%; background: yellow; }
+            x: parent.width / 3;
+            y: parent.height / 2;
+            width: parent.width / 3;
+            Dialog {
+                Text {
+                    text: "Przeładować listę?";
+                    color: red;
+                }
+                StandardButton {
+                    kind: ok;
+                    clicked => { restart() }
+                }
+                StandardButton { kind: cancel; }
+            }
+        }
+
+        Button {
+            text: "Przeładuj listę";
+            width: parent.width / 2;
+            x: parent.width / 4;
+            clicked => { popup.show() }
         }
     }
 }
