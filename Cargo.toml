@@ -2,6 +2,12 @@
 name = "lottery"
 version = "0.2.3"
 edition = "2021"
+include = [
+    "**/*.slint",
+    "**/*.rs",
+    "src/test_names.htm",
+    "config.toml"
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
