@@ -1,4 +1,15 @@
-import { AboutSlint, Button, StandardButton, VerticalBox, LineEdit, HorizontalBox, ListView, ScrollView, StandardButton } from "std-widgets.slint";
+import {
+    AboutSlint,
+    Button,
+    StandardButton,
+    VerticalBox,
+    LineEdit,
+    HorizontalBox,
+    ListView,
+    ScrollView,
+    StandardButton,
+    Palette
+} from "std-widgets.slint";
 
 export component AppWindow inherits Window {
     callback draw_person;
@@ -9,72 +20,89 @@ export component AppWindow inherits Window {
     in-out property <string> listFile;
     in-out property <string> winner;
 
-    width: 600px;
+    min-width: 600px;
     preferred-height: 1000px;
-    VerticalLayout {
-        alignment: start;
-        Text {
-            text: list;
-            font-size: 16px;
-            horizontal-alignment: center;
-        }
-    }
-    VerticalLayout {
-        alignment: end;
-        Text {
-            text: status;
-            font-size: 16px;
-            horizontal-alignment: center;
-        }
-        Text {
-            text: winner;
-            font-size: 24px;
-            horizontal-alignment: center;
-        }
-        Button {
-            text: "Wylosuj";
-            width: parent.width / 2;
-            x: parent.width / 4;
-            clicked => { draw_person() }
-        }
-        HorizontalBox {
-            alignment: stretch;
+
+    Rectangle {
+        width: 100%;
+        background: Palette.control-background;
+        VerticalLayout {
+            alignment: start;
             Text {
-                text: "plik listy";
-                width: parent.width / 3;
-                vertical-alignment: center;
-                horizontal-alignment: right;
-            }
-            LineEdit {
-                text: listFile;
-                font-size: 12px;
-                width: parent.width / 3;
+                text: list;
+                font-size: 16px;
+                horizontal-alignment: center;
             }
         }
-
-        popup := PopupWindow {
-            Rectangle { height:100%; width: 100%; background: yellow; }
-            x: parent.width / 3;
-            y: parent.height / 2;
-            width: parent.width / 3;
-            Dialog {
-                Text {
-                    text: "Przeładować listę?";
-                    color: red;
+        VerticalLayout {
+            alignment: end;
+            Rectangle {
+                width: 100%;
+                background: Palette.control-background;
+                VerticalBox {
+                    Text {
+                        text: status;
+                        font-size: 16px;
+                        horizontal-alignment: center;
+                        color: Palette.control-foreground;
+                    }
+                    Text {
+                        text: winner;
+                        font-size: 24px;
+                        horizontal-alignment: center;
+                        color: Palette.control-foreground;
+                    }
                 }
-                StandardButton {
-                    kind: ok;
-                    clicked => { restart() }
-                }
-                StandardButton { kind: cancel; }
             }
-        }
+            Button {
+                text: "Wylosuj";
+                width: parent.width / 2;
+                x: parent.width / 4;
+                clicked => { draw_person() }
+            }
+            Rectangle {
+                width: 100%;
+                background: Palette.control-background;
+                HorizontalBox {
+                    alignment: stretch;
+                    Text {
+                        text: "plik listy";
+                        width: parent.width / 3;
+                        vertical-alignment: center;
+                        horizontal-alignment: right;
+                    }
+                    LineEdit {
+                        text: listFile;
+                        font-size: 12px;
+                        width: parent.width / 3;
+                    }
+                }
+            }
 
-        Button {
-            text: "Przeładuj listę";
-            width: parent.width / 2;
-            x: parent.width / 4;
-            clicked => { popup.show() }
+            popup := PopupWindow {
+                Rectangle { height:100%; width: 100%; background: yellow; }
+                x: parent.width / 3;
+                y: parent.height / 2;
+                width: parent.width / 3;
+                Dialog {
+                    Text {
+                        text: "Przeładować listę?";
+                        color: red;
+                    }
+                    StandardButton {
+                        kind: ok;
+                        clicked => { restart() }
+                    }
+                    StandardButton { kind: cancel; }
+                }
+            }
+
+            Button {
+                text: "Przeładuj listę";
+                width: parent.width / 2;
+                x: parent.width / 4;
+                clicked => { popup.show() }
+            }
         }
     }
 }
