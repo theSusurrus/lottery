@@ -110,24 +110,17 @@ fn main() -> Result<(), slint::PlatformError> {
 
             let mut names = names.lock().unwrap();
 
-            if names.len() > 1 {
+            if names.len() > 0 {
                 let random_index = rand::random::<usize>() % names.len();
-                let name_drawn = names[random_index].clone();
+                let mut winner_text = names[random_index].clone();
                 names.remove(random_index);
 
-                write_to_log(&log_context, format!("{}\n", name_drawn).as_bytes());
+                if names.len() == 0 {
+                    winner_text = format!("WINNER! {}", winner_text);
+                }
 
-                refresh_ui(&ui, &names, name_drawn.as_str());
-            } else if names.len() == 1 {
-
-                let mut winner_text: String = "WINNER: ".to_string();
-                winner_text += &names[0].clone();
-
-                write_to_log(&log_context, names[0].clone().as_bytes());
-
-                *names = vec![];
-
-                refresh_ui(&ui, &names, &winner_text);
+                write_to_log(&log_context, format!("{}\n", winner_text).as_bytes());
+                refresh_ui(&ui, &names, winner_text.as_str());
             }
         }
     });
