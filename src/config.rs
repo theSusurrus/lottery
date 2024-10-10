@@ -27,3 +27,15 @@ impl LotteryConfig {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::config::*;
+
+    #[test]
+    fn config_test() {
+        let config = LotteryConfig::new("config.toml");
+
+        assert_eq!(config.name_source, "src/test_names.htm")
+    }
+}

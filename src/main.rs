@@ -20,7 +20,10 @@ fn names_to_string(names: &Vec<String>) -> String {
 }
 
 fn generate_status(names: &Vec<String>) -> String {
-    "Zostało ".to_owned() + &names.len().to_string()
+    match  &names.len() {
+        0 => "".to_string(),
+        len => "Zostało ".to_owned() + &format!("{}", len)
+    }
 }
 
 #[derive(Clone)]
@@ -30,52 +33,73 @@ struct LogContext {
 
 fn get_log_name() -> String {
     let time = Utc::now();
-    let path = format!("{}-{}-{}_{}_{}_{}.txt",
+    format!("{}-{}-{}_{}_{}_{}.txt",
         time.year(),
         time.month(),
         time.day(),
         time.hour(),
         time.minute(),
-        time.second());
-
-    path
+        time.second())
 }
 
-fn open_log(filename: String) {
-    File::create(filename).unwrap();
+fn open_log(ctx: &Arc<Mutex<LogContext>>) {
+    let mut context = ctx.lock().unwrap();
+    context.filename = get_log_name();
+    File::create(context.filename.clone()).unwrap();
 }
 
-fn write_to_log(filename: String, buf: &[u8]) {
+fn write_to_log(ctx: &Arc<Mutex<LogContext>>, buf: &[u8]) {
+    let context = ctx.lock().unwrap();
     let mut file = OpenOptions::new()
         .write(true)
         .append(true)
-        .open(filename)
+        .open(context.filename.clone())
         .unwrap();
     file.write(buf).unwrap();
 }
 
-fn main() -> Result<(), slint::PlatformError> {
-    let config: config::LotteryConfig = config::LotteryConfig::new(CONFIG_PATH);
+fn refresh_ui(ui: &AppWindow, names: &Vec<String>, winner_text: &str) {
+    ui.set_status(generate_status(&names).into());
+    ui.set_list(names_to_string(&names).into());
+    ui.set_winner(winner_text.into());
+}
 
-    let provider: names::html::HtmlProvider = crate::names::html::HtmlProvider::new(&config.name_source);
-    let names =
+fn restart(ui: &AppWindow,
+           provider: &names::html::HtmlProvider,
+           names: &Arc<Mutex<Vec<String>>>,
+           log_ctx: &Arc<Mutex<LogContext>>) {
+    match provider.get_names() {
+        Ok(provided) =>{
+            refresh_ui(&ui, &provided, "");
+            open_log(log_ctx);
+            *names.lock().unwrap() = provided;
+        },
+        Err(error) => {
+            ui.set_status(error.to_string().into());
+            *names.lock().unwrap() = vec![];
+        },
+    }
+}
+
+fn main() -> Result<(), slint::PlatformError> {
+    let ui = AppWindow::new()?;
+
+    let config: config::LotteryConfig = config::LotteryConfig::new(CONFIG_PATH);
+    ui.set_listFile(config.name_source.clone().into());
+
+    let names: Arc<Mutex<Vec<String>>> =
         Arc::new(
-            Mutex::new(
-                provider.get_names().unwrap()));
+            Mutex::new(vec![]));
 
     let log_context =
         Arc::new(Mutex::new(
             LogContext {
-                filename: get_log_name(),
+                filename: "".to_string(),
             }));
 
-    open_log(log_context.lock().unwrap().filename.clone());
-
-    let ui = AppWindow::new()?;
-
-    ui.set_status(generate_status(&names.lock().unwrap()).into());
-    ui.set_list(names_to_string(&names.lock().unwrap()).into());
-    ui.set_listFile(config.name_source.into());
+    let provider: names::html::HtmlProvider =
+        crate::names::html::HtmlProvider::new(&config.name_source.clone());
+    restart(&ui, &provider, &names, &log_context);
 
     ui.on_draw_person({
         let ui_handle = ui.as_weak();
@@ -85,29 +109,18 @@ fn main() -> Result<(), slint::PlatformError> {
             let ui = ui_handle.unwrap();
 
             let mut names = names.lock().unwrap();
-            let log_context = log_context.lock().unwrap();
 
-            if names.len() > 1 {
+            if names.len() > 0 {
                 let random_index = rand::random::<usize>() % names.len();
-                let name = names[random_index].clone();
+                let mut winner_text = names[random_index].clone();
                 names.remove(random_index);
 
-                let name_line = format!("{}\n", name);
-                write_to_log(log_context.filename.clone(), name_line.as_bytes());
+                if names.len() == 0 {
+                    winner_text = format!("WINNER! {}", winner_text);
+                }
 
-                ui.set_status(generate_status(&names).into());
-                ui.set_list(names_to_string(&names).into());
-                ui.set_winner(name.into());
-            } else if names.len() == 1 {
-
-                let mut winner_text: String = "WINNER: ".to_string();
-                winner_text += &names[0].clone();
-
-                write_to_log(log_context.filename.clone(), names[0].clone().as_bytes());
-
-                ui.set_winner(winner_text.into());
-
-                names.remove(0);
+                write_to_log(&log_context, format!("{}\n", winner_text).as_bytes());
+                refresh_ui(&ui, &names, winner_text.as_str());
             }
         }
     });
@@ -118,17 +131,7 @@ fn main() -> Result<(), slint::PlatformError> {
         let log_context = log_context.clone();
         move || {
             let ui = ui_handle.unwrap();
-
-            let mut names = names.lock().unwrap();
-            let mut log_context = log_context.lock().unwrap();
-
-            *names = provider.get_names().unwrap();
-            log_context.filename = get_log_name();
-            open_log(log_context.filename.clone());
-
-            ui.set_status(generate_status(&names).into());
-            ui.set_list(names_to_string(&names).into());
-            ui.set_winner("".into());
+            restart(&ui, &provider, &names, &log_context);
         }
     });
 
