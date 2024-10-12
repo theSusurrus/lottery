@@ -70,7 +70,7 @@ fn restart(ui: &AppWindow,
            log_ctx: &Arc<Mutex<LogContext>>) {
     match provider.get_names() {
         Ok(provided) =>{
-            refresh_ui(&ui, &provided, "");
+            refresh_ui(&ui, &provided, " ");
             open_log(log_ctx);
             *names.lock().unwrap() = provided;
         },
