@@ -20,3 +20,8 @@ chrono = "0.4.38"
 
 [build-dependencies]
 slint-build = "1.6"
+
+[features]
+demo = []
+
+default = []

@@ -65,7 +65,7 @@ fn refresh_ui(ui: &AppWindow, names: &Vec<String>, winner_text: &str) {
 }
 
 fn restart(ui: &AppWindow,
-           provider: &names::html::HtmlProvider,
+           provider: &impl Provider,
            names: &Arc<Mutex<Vec<String>>>,
            log_ctx: &Arc<Mutex<LogContext>>) {
     match provider.get_names() {
@@ -79,6 +79,16 @@ fn restart(ui: &AppWindow,
             *names.lock().unwrap() = vec![];
         },
     }
+}
+
+#[cfg(feature = "demo")]
+fn get_provider(_filename: &str) -> names::demo::DemoProvider {
+    names::demo::DemoProvider::new()
+}
+
+#[cfg(not(feature = "demo"))]
+fn get_provider(filename: &str) -> names::html::HtmlProvider {
+    names::html::HtmlProvider::new(filename)
 }
 
 fn main() -> Result<(), slint::PlatformError> {
@@ -97,8 +107,8 @@ fn main() -> Result<(), slint::PlatformError> {
                 filename: "".to_string(),
             }));
 
-    let provider: names::html::HtmlProvider =
-        crate::names::html::HtmlProvider::new(&config.name_source.clone());
+    let provider = get_provider(&config.name_source);
+
     restart(&ui, &provider, &names, &log_context);
 
     ui.on_draw_person({

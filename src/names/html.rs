@@ -43,7 +43,7 @@ impl DomTraverser {
     fn traverse_node(&mut self, node: Node) {
         const TOP_DIVIDER: &str = " ------------------------------------------------------------------------------- ";
         const BOTTOM_DIVIER: &str = " EventLink - Copyright";
-    
+
         /* For every element, traverse its children nodes */
         let mut element_traverser = | element: ElementStruct | {
             for node in element.children {
@@ -53,7 +53,7 @@ impl DomTraverser {
                 }
             }
         };
-    
+
         match node {
             Text(string) => {
                 /* Only Text Elements are interesting for us */
