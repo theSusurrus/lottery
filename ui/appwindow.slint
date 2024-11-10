@@ -13,7 +13,7 @@ import {
 
 export component AppWindow inherits Window {
     title: "Loteria";
-    background: black;
+    background: Palette.control-background;
 
     callback draw_person;
     callback restart;
@@ -34,8 +34,8 @@ export component AppWindow inherits Window {
             Rectangle {
                 height:100%;
                 width: 100%;
-                background: black;
-                border-color: white;
+                background: Palette.control-background;
+                border-color: Palette.control-foreground;
                 border-radius: 10px;
                 border-width: 2px;
                 VerticalBox {
