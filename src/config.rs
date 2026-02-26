@@ -30,7 +30,6 @@ pub struct LotteryConfig {
 impl LotteryConfig {
 
     pub fn new(config_path: &str) -> LotteryConfig {
-        /* Create a config builder, based on file from CONFIG_PATH */
         let config_builder: Config =
             Config::builder().add_source(config::File::with_name(config_path))
                              .build()
