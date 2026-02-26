@@ -14,7 +14,7 @@ include = [
 [dependencies]
 config = "0.13.4"
 html_parser = "0.7.0"
-slint = "1.6"
+slint = "1.15.1"
 rand = "0.8.5"
 chrono = "0.4.38"
 

@@ -4,23 +4,35 @@ use std::io::{Read, Error as IoError, ErrorKind as IoErrorKind};
 use html_parser::{Dom, Node, Node::{Text, Element as Element}, Element as ElementStruct};
 
 pub struct HtmlProvider {
-    source_path: String,
+    names: Vec<String>
 }
 
 impl HtmlProvider {
-    fn load_html(source_path: &str) -> Result<String, std::io::Error> {
+    pub fn new(source_path: &str) -> Result<HtmlProvider, std::io::Error> {
         let mut file = std::fs::OpenOptions::new()
             .read(true)
             .open(source_path)?;
         let mut contents = String::new();
-        file.read_to_string(&mut contents)?;
+        match file.read_to_string(&mut contents) {
+            Ok(_) => (),
+            Err(e) => return Err(e)
+        };
 
-        Ok(contents)
-    }
+        let dom = match Dom::parse(&contents) {
+            Ok(dom) => dom,
+            Err(e) => return Err(
+                IoError::new(IoErrorKind::InvalidData, e)
+            ),
+        };
 
-    pub fn new(source_path: &str) -> HtmlProvider {
-        HtmlProvider {
-            source_path: source_path.to_string(),
+        let mut traverser = DomTraverser::new();
+        traverser.traverse_dom(dom);
+
+        let names = traverser.names;
+        if names.len() > 1 {
+            Ok(HtmlProvider {names})
+        } else {
+            Err(IoError::new(IoErrorKind::InvalidData, "No names found in HTML"))
         }
     }
 }
@@ -93,26 +105,8 @@ impl DomTraverser {
 }
 
 impl names::Provider for HtmlProvider {
-    fn get_names(&self) -> Result<Vec<String>, std::io::Error> {
-        let source = Self::load_html(&self.source_path)?;
-
-        let dom = match Dom::parse(&source) {
-            Ok(dom) => dom,
-            Err(error) => return Err(
-                IoError::new(IoErrorKind::InvalidData, error)
-            ),
-        };
-
-        let mut traverser = DomTraverser::new();
-        traverser.traverse_dom(dom);
-
-        let names = traverser.names;
-        if names.len() > 1 {
-            // println!("HTML provider names = {:?}", names);
-            Ok(names)
-        } else {
-            Err(IoError::new(IoErrorKind::InvalidData, "No names found in HTML"))
-        }
+    fn get_names(&self) -> Vec<String> {
+        self.names.clone()
     }
 }
 
@@ -123,12 +117,11 @@ mod tests {
 
     #[test]
     fn file_parsing() {
-        let provider = HtmlProvider::new("src/test_names.htm");
+        let provider_result = HtmlProvider::new("src/test_names.htm");
 
-        let names_parsing = provider.get_names();
-        assert!(names_parsing.is_ok());
+        assert!(provider_result.is_ok());
 
-        let names = names_parsing.unwrap();
+        let names = provider_result.unwrap().get_names();
         assert_eq!(names,
             vec![
                 "Baltazar Brzęczyszczykiewicz".to_string(),
