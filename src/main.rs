@@ -70,17 +70,10 @@ fn restart(ui: &AppWindow,
            provider: &Arc<Mutex<dyn names::Provider>>,
            names: &Arc<Mutex<Vec<String>>>,
            log_ctx: &Arc<Mutex<LogContext>>) {
-    match provider.lock().unwrap().get_names() {
-        Ok(provided) =>{
-            refresh_ui(&ui, &provided, " ");
-            open_log(log_ctx);
-            *names.lock().unwrap() = provided;
-        },
-        Err(error) => {
-            ui.set_status(error.to_string().into());
-            *names.lock().unwrap() = vec![];
-        },
-    }
+    let provided = provider.lock().unwrap().get_names();
+    refresh_ui(&ui, &provided, " ");
+    open_log(log_ctx);
+    *names.lock().unwrap() = provided;
 }
 
 fn main() -> Result<(), slint::PlatformError> {
@@ -89,8 +82,7 @@ fn main() -> Result<(), slint::PlatformError> {
     let config: config::LotteryConfig = config::LotteryConfig::new(CONFIG_PATH);
 
     let names: Arc<Mutex<Vec<String>>> =
-        Arc::new(
-            Mutex::new(vec![]));
+        Arc::new(Mutex::new(vec![]));
 
     let log_context =
         Arc::new(Mutex::new(
@@ -102,10 +94,10 @@ fn main() -> Result<(), slint::PlatformError> {
         config::LotteryConfigSourceType::FILE =>
             Arc::new(Mutex::new(
                 crate::names::html::HtmlProvider::new(
-                    config.name_source.unwrap().as_str()))),
+                    config.name_source.unwrap().as_str()).unwrap())),
         config::LotteryConfigSourceType::PASTE =>
             Arc::new(Mutex::new(
-                crate::names::paste::PasteProvider::new())),
+                crate::names::paste::PasteProvider::new().unwrap())),
         _ => panic!()
     };
 
@@ -135,7 +127,7 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
-    ui.on_restart({
+    ui.on_reset({
         let ui_handle = ui.as_weak();
         let names = names.clone();
         let log_context = log_context.clone();

@@ -13,12 +13,16 @@ Each lottery draw is immediately logged to file, so it can be continued manually
 
 ![Paste window screenshot](doc/paste.png "Paste window screenshot")
 
+![Restart popup screenshot](doc/restart.png "Restart popup screenshot")
+
 ## Usage
 
 Application configuration is done through the `config.toml` file. In this file, we provide:
 
 - type of name source, either "file" or "paste"
 - optionally, the path to the file with the name list
+
+You can restart the lottery using the same name list provided. To load a new list, close the application and open it again.
 
 ## Architecture
 

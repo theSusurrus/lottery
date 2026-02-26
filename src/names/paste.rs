@@ -6,16 +6,11 @@ use crate::names;
 slint::include_modules!();
 
 pub struct PasteProvider {
+    names: Vec<String>
 }
 
 impl PasteProvider {
-    pub fn new() -> PasteProvider {
-        PasteProvider {}
-    }
-}
-
-impl names::Provider for PasteProvider {
-    fn get_names(&self) -> Result<Vec<String>, std::io::Error> {
+    pub fn new() -> Result<PasteProvider, std::io::Error> {
         let paste_window = PasteWindow::new().unwrap();
         let names_string = Arc::new(Mutex::new(String::new()));
 
@@ -29,16 +24,21 @@ impl names::Provider for PasteProvider {
             }
         });
 
-        match paste_window.run() {
-            Err(e) => return Err(std::io::Error::other(format!("paste window failed: {}", e.to_string()))),
-            Ok(_) => ()
-        };
+        paste_window.run().unwrap();
 
         let mut names: Vec<String> = Vec::new();
         for name in names_string.lock().unwrap().split("\n") {
             names.push(name.trim().to_string());
         }
 
-        Ok(names)
+        Ok(PasteProvider { 
+            names
+        })
+    }
+}
+
+impl names::Provider for PasteProvider {
+    fn get_names(&self) -> Vec<String> {
+        self.names.clone()
     }
 }
