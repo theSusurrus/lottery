@@ -102,7 +102,7 @@ fn main() -> Result<(), slint::PlatformError> {
         config::LotteryConfigSourceType::FILE =>
             Arc::new(Mutex::new(
                 crate::names::html::HtmlProvider::new(
-                    config.name_source.as_str()))),
+                    config.name_source.unwrap().as_str()))),
         config::LotteryConfigSourceType::PASTE =>
             Arc::new(Mutex::new(
                 crate::names::paste::PasteProvider::new())),
